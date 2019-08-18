@@ -276,7 +276,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -118.37497, y: 319.5}
+  m_AnchoredPosition: {x: -118.37509, y: 319.5}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &3901923081570517198
@@ -668,8 +668,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 2.5899963, y: 4.299988}
-  m_SizeDelta: {x: -5.1900005, y: 0}
+  m_AnchoredPosition: {x: -1.3, y: 4.299988}
+  m_SizeDelta: {x: -12.9, y: 0}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &4639771516137197258
 CanvasRenderer:
@@ -712,11 +712,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1.1
-  m_Text: "Varcy0n: This\r\nVarcy0n: is\r\nVarcy0n: working\r\nVarcy0n: finall\r\nVarcy0n:
-    finally\r\nVarcy0n: yay\r\nVarcy0n: no\r\nVarcy0n: extra\r\nVarcy0n: coding. I
-    love when things work\r\nVarcy0n: now to just format it\r\nVarcy0n: testing\r\nVarcy0n:
-    is tit still\r\nVarcy0n: working\r\nVarcy0n: so\r\nVarcy0n: no\r\nVarcy0n: its\r\nVarcy0n:
-    now\r\nVarcy0n: testing\r\nVarcy0n: ok\r\nVarcy0n: testing\r\nVarcy0n: yay"
+  m_Text: 
 --- !u!114 &1623952867366166490
 MonoBehaviour:
   m_ObjectHideFlags: 0

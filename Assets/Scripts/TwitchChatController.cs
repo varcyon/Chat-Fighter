@@ -11,7 +11,8 @@ public class TwitchChatController : MonoBehaviour
     TcpClient tcpClient;
     StreamReader reader;
     StreamWriter writer;
-
+    public GameObject arenaSetupUI;
+    public ArenaSetup arenaSetup;
     public Text chatBox;
     private readonly string userName = "chatfighter";
     private readonly string password = "oauth:50s1tpqugy3wowbrejq2l2ab8hafb0";
@@ -20,7 +21,10 @@ public class TwitchChatController : MonoBehaviour
     DateTime lastMessageSendTime;
 
     Queue<string> sendMessageQueue;
-
+    private void Awake()
+    {
+        arenaSetup = arenaSetupUI.GetComponent<ArenaSetup>();
+    }
     public void Start()
     {
         sendMessageQueue = new Queue<string>();
@@ -87,12 +91,21 @@ public class TwitchChatController : MonoBehaviour
             chatBox.text = chatBox.text + "\n" + String.Format("{0}: {1}", speaker, message);
             
         //Twitch Command
-             if (message.StartsWith("!hi"))
-             {
-                 SendTwitchMessage(String.Format("Hello, {0}", speaker));
-             }
+          if (message.StartsWith("!hi"))
+          {
+              SendTwitchMessage(String.Format("Hello, {0}", speaker));
+          }
 
-
+          if (message.StartsWith("!join"))
+          {
+             arenaSetup.playersJoining.Add(speaker);
+             SendTwitchMessage(String.Format("Adding, {0} to the game!", speaker));
+          }
+          if (message.StartsWith("!drop"))
+          {
+              arenaSetup.playersJoining.Remove(speaker);
+              SendTwitchMessage(String.Format("Removing, {0} from the game!", speaker));
+          }
     }
     
 
