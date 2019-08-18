@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Net.Sockets;
 using System.IO;
@@ -11,7 +12,10 @@ public class TwitchChatController : MonoBehaviour
     StreamReader reader;
     StreamWriter writer;
 
-    public string userName, password, channelName;
+    public Text chatBox;
+    private readonly string userName = "chatfighter";
+    private readonly string password = "oauth:50s1tpqugy3wowbrejq2l2ab8hafb0";
+    public string channelName;
     string prefixForSendingChatMessages;
     DateTime lastMessageSendTime;
 
@@ -79,12 +83,16 @@ public class TwitchChatController : MonoBehaviour
     }
     void ReceiveMessage(String speaker, string message)
          {
-             print(String.Format("\r\n{0}: {1}", speaker, message));
-
+            print(String.Format("\r\n{0}: {1}", speaker, message));
+            chatBox.text = chatBox.text + "\n" + String.Format("{0}: {1}", speaker, message);
+            
+        //Twitch Command
              if (message.StartsWith("!hi"))
              {
                  SendTwitchMessage(String.Format("Hello, {0}", speaker));
              }
+
+
     }
     
 

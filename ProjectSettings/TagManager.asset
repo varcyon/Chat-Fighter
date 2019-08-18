@@ -10,6 +10,8 @@ TagManager:
   - Player 4
   - Player 5
   - Player 6
+  - CeilingLocations
+  - TwitchChatController
   layers:
   - Default
   - TransparentFX
@@ -20,7 +22,7 @@ TagManager:
   - 
   - 
   - Players
-  - 
+  - Spawners
   - 
   - 
   - 

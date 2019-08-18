@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
-    float timer = 3;
+    readonly float timer = 3;
     NavMeshAgent NavMeshAgent;
     bool inDoThings;
     public GameObject[] players = new GameObject[5];
