@@ -1210,12 +1210,23 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4854467644795476618, guid: b6852a1afcf992c44981fb4444c71e6c,
+        type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4004081208167519938, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
       propertyPath: m_AnchoredPosition.x
       value: -126.87492
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 4004081208167519938, guid: b6852a1afcf992c44981fb4444c71e6c,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 319.5
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 2827902469351139687, guid: b6852a1afcf992c44981fb4444c71e6c, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: b6852a1afcf992c44981fb4444c71e6c, type: 3}
 --- !u!1 &1342875238
 GameObject:
@@ -1377,18 +1388,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1391143079}
   m_CullTransparentMesh: 0
---- !u!114 &1610486027 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2827902469351139705, guid: b6852a1afcf992c44981fb4444c71e6c,
-    type: 3}
-  m_PrefabInstance: {fileID: 1339203743}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 678a3b050d5c3164bbcb4bbcf6165d57, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1653240153
 GameObject:
   m_ObjectHideFlags: 0
@@ -1676,14 +1675,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95d63a94e0ab72d4699b852b388baf6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  twitchChatController: {fileID: 1610486027}
-  playersJoining:
-  - tesing
-  - joe
-  - kljsdflkajfdlsakjdflsakfjsa
-  - slkfjdsalfs
-  - salkd
-  - lsk
+  playersJoining: []
   joinedPlayer:
   - {fileID: 1653240153}
   - {fileID: 844822420}
@@ -1827,9 +1819,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a5e12546d096194cb2a3f76e442579d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playersList: {fileID: 1813089448}
-  players: []
-  Text: 
 --- !u!114 &2143557127
 MonoBehaviour:
   m_ObjectHideFlags: 0

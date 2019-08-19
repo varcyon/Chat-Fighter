@@ -9,15 +9,16 @@ public class GetPlayers : MonoBehaviour
 {
 
     public List<GameObject> PlayerUITExt = new List<GameObject>();
-    public List<string> playersJoining;
+    public List<string> players = new List<string>();
 
     void Start()
     {
+        players = TwitchChatController.instance.playersJoined;
         for (int i = 0; i < 6; i++)
         {
-            if (i < playersJoining.Count)
+            if (i < players.Count)
             {
-                PlayerUITExt[i].GetComponent<Text>().text = playersJoining[i];
+                PlayerUITExt[i].GetComponent<Text>().text = players[i];
             }
             else
             {

@@ -7,8 +7,8 @@ using UnityEngine.SceneManagement;
 
 public class ArenaSetup : MonoBehaviour
 {
-    public TwitchChatController twitchChatController;
     public List<string> playersJoining = new List<string>();
+    [HideInInspector]
     public List<GameObject> joinedPlayer = new List<GameObject>();
 
     void Start()
@@ -23,7 +23,7 @@ public class ArenaSetup : MonoBehaviour
         if(playersJoining.Count == 7)
         {
             playersJoining.RemoveRange(1,1);
-            twitchChatController.SendTwitchMessage(String.Format("All positions filled!"));
+            TwitchChatController.instance.SendTwitchMessage(String.Format("All positions filled!"));
         }
         for (int i = 0; i < 6; i++)
         {
@@ -36,6 +36,7 @@ public class ArenaSetup : MonoBehaviour
                 joinedPlayer[i].GetComponent<Text>().text = String.Format("Player {0}",i+1);
             }
         }
+        TwitchChatController.instance.playersJoined = playersJoining;
     }
 }
 
