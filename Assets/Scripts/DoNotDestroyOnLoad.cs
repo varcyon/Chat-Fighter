@@ -7,7 +7,7 @@ public class DoNotDestroyOnLoad : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        GameObject[] objs = GameObject.FindGameObjectsWithTag("TwitchChatController");
+        UnityEngine.GameObject[] objs = UnityEngine.GameObject.FindGameObjectsWithTag("TwitchChatController");
 
         if (objs.Length > 1)
         {

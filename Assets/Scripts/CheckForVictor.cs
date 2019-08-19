@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class CheckForVictor : MonoBehaviour
 {
     // Start is called before the first frame update
-    public GameObject[] allPlayers = new GameObject[6];
+    public UnityEngine.GameObject[] allPlayers = new UnityEngine.GameObject[6];
     public string Winner;
     public int deathCount = 0;
     public Text winText;
@@ -20,7 +20,7 @@ public class CheckForVictor : MonoBehaviour
         if (deathCount == 5)
         {
             
-            foreach (GameObject p in allPlayers)
+            foreach (UnityEngine.GameObject p in allPlayers)
             {
                 if (p != null)
                 {

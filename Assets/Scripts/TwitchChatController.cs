@@ -12,7 +12,7 @@ public class TwitchChatController : MonoBehaviour
     StreamReader reader;
     StreamWriter writer;
     public GameObject arenaSetupUI;
-    public ArenaSetup arenaSetup;
+    ArenaSetup arenaSetup;
     public Text chatBox;
     private readonly string userName = "chatfighter";
     private readonly string password = "oauth:50s1tpqugy3wowbrejq2l2ab8hafb0";
@@ -40,8 +40,10 @@ public class TwitchChatController : MonoBehaviour
     {
         tcpClient = new TcpClient("irc.twitch.tv", 6667);
         reader = new StreamReader(tcpClient.GetStream());
-        writer = new StreamWriter(tcpClient.GetStream());
-        writer.AutoFlush = true;
+        writer = new StreamWriter(tcpClient.GetStream())
+        {
+            AutoFlush = true
+        };
 
         writer.WriteLine(String.Format("PASS {0}\r\nNick {1}\r\nUser {1} 8 * :{1}", password, userName));
         //writer.WriteLine("CAP REQ :twitch.tv/membership");

@@ -4691,6 +4691,7 @@ GameObject:
   - component: {fileID: 670066425}
   - component: {fileID: 670066424}
   - component: {fileID: 670066423}
+  - component: {fileID: 670066428}
   m_Layer: 5
   m_Name: HUDCanvas
   m_TagString: Untagged
@@ -4791,6 +4792,27 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &670066428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670066422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a595118633d5b54ca9925867a35aa34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  control: {fileID: 2827902469351139704, guid: b6852a1afcf992c44981fb4444c71e6c, type: 3}
+  PlayerUITExt:
+  - {fileID: 1396432899}
+  - {fileID: 297580852}
+  - {fileID: 914502531}
+  - {fileID: 2114859936}
+  - {fileID: 1102411522}
+  - {fileID: 1035300472}
+  playersJoining: []
 --- !u!1 &687936375
 GameObject:
   m_ObjectHideFlags: 0

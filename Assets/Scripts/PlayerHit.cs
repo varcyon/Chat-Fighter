@@ -8,14 +8,14 @@ public class PlayerHit : MonoBehaviour
     public float attackDelay = 1f;
     public int attackDamage = 10;
     public float recoveryTime = 2f;
-    public GameObject player;
+    public UnityEngine.GameObject player;
     public PlayerHealth enemyHealth;
     public Image ouch;
     public bool inRange;
     float timer;
     float recoveryTimer;
     public bool hitRecovery = false;
-    public GameObject enemy;
+    public UnityEngine.GameObject enemy;
     public Color hitFlashColor = new Color(1f, 0f, 0f, 1f);
     public Color playerColor;
     public bool damaged;

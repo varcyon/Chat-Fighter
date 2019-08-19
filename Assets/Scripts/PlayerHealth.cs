@@ -8,7 +8,7 @@ public class PlayerHealth : MonoBehaviour
     public int currentHealth;                                   
     public Slider healthSlider;
 
-    public GameObject winning;
+    public UnityEngine.GameObject winning;
     CheckForVictor checkForVictor;
     PlayerMovement playerMovement;
     PlayerHit playerHit;

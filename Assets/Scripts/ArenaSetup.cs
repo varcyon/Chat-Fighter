@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using UnityEngine.SceneManagement;
 
 public class ArenaSetup : MonoBehaviour
 {
@@ -18,56 +19,23 @@ public class ArenaSetup : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        int playerIndex = 0;
+        //int playerIndex = 0;
         if(playersJoining.Count == 7)
         {
             playersJoining.RemoveRange(1,1);
             twitchChatController.SendTwitchMessage(String.Format("All positions filled!"));
         }
-        foreach(string p in playersJoining)
+        for (int i = 0; i < 6; i++)
         {
-            joinedPlayer[playerIndex].GetComponent<Text>().text = playersJoining[playerIndex];
-            playerIndex++;
-        }
-        if (playersJoining.Count == 5)
-        {
-            joinedPlayer[5].GetComponent<Text>().text = "Player 6";
-        }
-        if (playersJoining.Count == 4)
-        {
-            joinedPlayer[5].GetComponent<Text>().text = "Player 6";
-            joinedPlayer[4].GetComponent<Text>().text = "Player 5";
-        }
-        if (playersJoining.Count == 3)
-        {
-            joinedPlayer[5].GetComponent<Text>().text = "Player 6";
-            joinedPlayer[4].GetComponent<Text>().text = "Player 5";
-            joinedPlayer[3].GetComponent<Text>().text = "Player 4";
-        }
-        if (playersJoining.Count == 2)
-        {
-            joinedPlayer[5].GetComponent<Text>().text = "Player 6";
-            joinedPlayer[4].GetComponent<Text>().text = "Player 5";
-            joinedPlayer[3].GetComponent<Text>().text = "Player 4";
-            joinedPlayer[2].GetComponent<Text>().text = "Player 3";
-        }
-        if (playersJoining.Count == 1)
-        {
-            joinedPlayer[5].GetComponent<Text>().text = "Player 6";
-            joinedPlayer[4].GetComponent<Text>().text = "Player 5";
-            joinedPlayer[3].GetComponent<Text>().text = "Player 4";
-            joinedPlayer[2].GetComponent<Text>().text = "Player 3";
-            joinedPlayer[1].GetComponent<Text>().text = "Player 2";
-        }
-        if (playersJoining.Count == 0)
-        {
-            joinedPlayer[5].GetComponent<Text>().text = "Player 6";
-            joinedPlayer[4].GetComponent<Text>().text = "Player 5";
-            joinedPlayer[3].GetComponent<Text>().text = "Player 4";
-            joinedPlayer[2].GetComponent<Text>().text = "Player 3";
-            joinedPlayer[1].GetComponent<Text>().text = "Player 2";
-            joinedPlayer[0].GetComponent<Text>().text = "Player 1";
+            if (i < playersJoining.Count)
+            {
+                joinedPlayer[i].GetComponent<Text>().text = playersJoining[i];
+            }
+            else
+            {
+                joinedPlayer[i].GetComponent<Text>().text = String.Format("Player {0}",i+1);
+            }
         }
     }
-
 }
+

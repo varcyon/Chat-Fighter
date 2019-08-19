@@ -9,8 +9,8 @@ public class PlayerMovement : MonoBehaviour
     readonly float timer = 3;
     NavMeshAgent NavMeshAgent;
     bool inDoThings;
-    public GameObject[] players = new GameObject[5];
-    public GameObject Target;
+    public UnityEngine.GameObject[] players = new UnityEngine.GameObject[5];
+    public UnityEngine.GameObject Target;
     public bool chase;
     public bool flee;
     public Image statusImage;
