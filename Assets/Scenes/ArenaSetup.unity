@@ -1762,6 +1762,11 @@ PrefabInstance:
       propertyPath: arenaSetupUI
       value: 
       objectReference: {fileID: 1813089448}
+    - target: {fileID: 2827902469351139705, guid: b6852a1afcf992c44981fb4444c71e6c,
+        type: 3}
+      propertyPath: channelName
+      value: lana_lux
+      objectReference: {fileID: 0}
     - target: {fileID: 2827902469351139686, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1865,7 +1870,7 @@ PrefabInstance:
     - target: {fileID: 4004081208167519938, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 309.5
+      value: 113.5
       objectReference: {fileID: 0}
     - target: {fileID: 6490813690691952508, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
