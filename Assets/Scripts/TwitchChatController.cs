@@ -7,6 +7,8 @@ using System.Net.Sockets;
 using System.IO;
 using System.Net;
 using LitJson;
+using System.Text;
+using System.Linq;
 
 public class TwitchChatController : MonoBehaviour
 {
@@ -27,12 +29,10 @@ public class TwitchChatController : MonoBehaviour
     public GameObject arenaSetupUI;
     ArenaSetup arenaSetup;
     public Text chatBox;
-    public List<User> chatters = new List<User>();
 
-    public string listOfChatters = "Tom, George, Monkey, Ginger, Alice,";
-
-
-
+    public List<string> chatUsers = new List<string>();
+    public List<string> currentUsers = new List<string>();
+    public List<User> newUsers = new List<User>();
     Queue<string> sendMessageQueue;
     void MakeSingleton()
     {
@@ -45,7 +45,6 @@ public class TwitchChatController : MonoBehaviour
             instance = this;
             DontDestroyOnLoad(gameObject);
         }
-
     }
     private void Awake()
     {
@@ -54,11 +53,6 @@ public class TwitchChatController : MonoBehaviour
     }
     public void Start()
     {
-
-        chatters.Add(new User("Tom", 500));
-        Debug.Log("user Tom add");
-        Debug.Log(chatters[0].userName + "," + chatters[0].exp);
-
         sendMessageQueue = new Queue<string>();
         prefixForSendingChatMessages = String.Format(":{0}{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :", userName, channelName);
         Connect();
@@ -78,7 +72,6 @@ public class TwitchChatController : MonoBehaviour
         {
             AutoFlush = true
         };
-
         writer.WriteLine(String.Format("PASS {0}\r\nNick {1}\r\nUser {1} 8 * :{1}", password, userName));
         writer.WriteLine("JOIN #" + channelName);
         lastMessageSendTime = DateTime.Now;
@@ -89,23 +82,17 @@ public class TwitchChatController : MonoBehaviour
         if (!tcpClient.Connected)
         {
             Connect();
-
         }
         TryReceivingMessages();
         TrySendingMessages();
-        TryGettingChatters();
-
     }
-
+    
     public void TryGettingChatters()
     {
-        string jsonString;
         JsonData jsonData;
         string chattersRequest = string.Format("http://tmi.twitch.tv/group/user/{0}/chatters", channelName);
         WebRequest requestObject = WebRequest.Create(chattersRequest);
-
         // requestObject.Credentials = new NetworkCredential("username", "password"); /// sending user and password if needed
-
         requestObject.Method = "GET";
         HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
         string responseJSON;
@@ -114,25 +101,102 @@ public class TwitchChatController : MonoBehaviour
             StreamReader sr = new StreamReader(stream);
             responseJSON = sr.ReadToEnd();
             sr.Close();
-
-            //string path = Application.dataPath + "/chatters.json";
-            // File.WriteAllText(path, responseJSON);
-
-            jsonString = File.ReadAllText(Application.dataPath + "/chatters.json");
-            jsonData = JsonMapper.ToObject(jsonString);
-
-            Debug.Log(jsonData["chatters"]["viewers"][0]);
-
-            /* 
-             foreach(var item in jsonData["chatters"]["viewers"]){
-             
-            }
-             */
-            
+            jsonData = JsonMapper.ToObject(responseJSON);
         }
 
+        AddChatUsersToList(jsonData);
+       
+    }
+    public void AddChatUsersToList(JsonData jsonData)
+    {
+        foreach (var item in jsonData["chatters"]["broadcaster"])
+        {
+            chatUsers.Add(item.ToString());
+        }
+        foreach (var item in jsonData["chatters"]["moderators"])
+        {
+            chatUsers.Add(item.ToString());
+        }
+        foreach (var item in jsonData["chatters"]["viewers"])
+        {
+            chatUsers.Add(item.ToString());
+        }
+        foreach (var item in jsonData["chatters"]["staff"])
+        {
+            chatUsers.Add(item.ToString());
+        }
+        foreach (var item in jsonData["chatters"]["admins"])
+        {
+            chatUsers.Add(item.ToString());
+        }
+        foreach (var item in jsonData["chatters"]["global_mods"])
+        {
+            chatUsers.Add(item.ToString());
+        }
+        foreach (var item in jsonData["chatters"]["vips"])
+        {
+            chatUsers.Add(item.ToString());
+        }
+
+        CompareNewToCurrentUsers();
     }
 
+    void CompareNewToCurrentUsers()
+    {
+        bool matched = false;
+        if (File.Exists(Application.dataPath + "/UserData.json"))
+        {
+            //compare current and new list
+            String jsonFile;
+            JsonData jsonData;
+            jsonFile = File.ReadAllText(Application.dataPath + "/UserData.json");
+            jsonData = JsonMapper.ToObject(jsonFile);
+
+            for(int i = 0; i < jsonData["users"].Count; i++)
+            {
+                currentUsers.Add(jsonData["users"][i]["userName"].ToString());
+            }
+           // newUsers.AddRange(new User(currentUsers.Except(chatUsers).ToString()));
+            
+            for (int i = 0; i < chatUsers.Count; i++)
+            {
+                bool result = currentUsers.Contains(chatUsers[i]);
+                if(!result)
+                {
+                    Debug.Log(result + string.Format(" : {0} is not currentUsers. add to file.", chatUsers[i]));
+                    newUsers.Add(new User(chatUsers[i]));
+                }
+            }
+        } else
+        {// if file doesn't exsist go ahead and write current users
+            WriteUsersToJson();
+        }
+    }
+
+    void WriteUsersToJson()
+    {
+        //Writes users to Json file
+        StringBuilder sb = new StringBuilder();
+        JsonWriter writer = new JsonWriter(sb);
+        writer.WriteObjectStart();
+        writer.WritePropertyName("users");
+        writer.WriteArrayStart();
+        foreach (var user in chatUsers)
+        {
+            writer.WriteObjectStart();
+            writer.WritePropertyName("userName");
+            writer.Write(user);
+            writer.WritePropertyName("Exp");
+            writer.Write(0);
+            writer.WriteObjectEnd();
+        }
+        writer.WriteArrayEnd();
+        writer.WriteObjectEnd();
+        //Writing file
+        string path = Application.dataPath + "/UserData.json";
+        File.WriteAllText(path, sb.ToString());
+        Debug.Log("file written");
+    }
     void TryReceivingMessages()
     {
         if (tcpClient.Available > 0)
@@ -146,7 +210,6 @@ public class TwitchChatController : MonoBehaviour
             if (iCollon > 0)
             {
                 var command = message.Substring(1, iCollon);
-
                 if (command.Contains("PRIVMSG #"))
                 {
                     var iBang = command.IndexOf("!");
@@ -154,16 +217,11 @@ public class TwitchChatController : MonoBehaviour
                     {
                         var speaker = command.Substring(0, iBang);
                         var chatMessage = message.Substring(iCollon + 1);
-
                         ReceiveMessage(speaker, chatMessage);
                     }
                 }
-
-
             }
-
         }
-
     }
     void ReceiveMessage(String speaker, string message)
     {
@@ -201,26 +259,4 @@ public class TwitchChatController : MonoBehaviour
             }
         }
     }
-
-    [System.Serializable]
-    public class ChatRoom
-    {
-        public int chatter_count;
-        public Chatters chatters;
-        public class Chatters
-        {
-            public string[] broadcaster;
-            public object[] vips;
-            public string[] moderators;
-            public object[] staff;
-            public object[] admins;
-            public object[] global_mods;
-            public string[] viewers;
-        }
-    }
-
-    
-
-    
-
 }

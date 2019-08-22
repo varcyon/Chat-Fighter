@@ -1,25 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+[System.Serializable]
 public class User : List<User>
 {
-    public string userName { set; get; }
-    public  int exp  { set; get; }
-
-public User(string name, int xp)
+    public string UserName;
+    public int Exp = 0;
+    public User(string name, int xp)
     {
-        this.userName = name;
-        this.exp = xp;
+        this.UserName = name;
+        this.Exp = xp;
     }
-    void Start()
+    public User(string name)
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        this.UserName = name;
     }
 }
+
