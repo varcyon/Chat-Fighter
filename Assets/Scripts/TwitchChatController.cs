@@ -30,9 +30,11 @@ public class TwitchChatController : MonoBehaviour
     ArenaSetup arenaSetup;
     public Text chatBox;
 
-    public List<string> chatUsers = new List<string>();
-    public List<string> currentUsers = new List<string>();
+    //lists for getting twitch chat users
+    public List<User> chatUsers = new List<User>();
+    public List<User> currentUsers = new List<User>();
     public List<User> newUsers = new List<User>();
+    
     Queue<string> sendMessageQueue;
     void MakeSingleton()
     {
@@ -103,7 +105,6 @@ public class TwitchChatController : MonoBehaviour
             sr.Close();
             jsonData = JsonMapper.ToObject(responseJSON);
         }
-
         AddChatUsersToList(jsonData);
        
     }
@@ -111,39 +112,37 @@ public class TwitchChatController : MonoBehaviour
     {
         foreach (var item in jsonData["chatters"]["broadcaster"])
         {
-            chatUsers.Add(item.ToString());
+            chatUsers.Add(new User(item.ToString()));
         }
         foreach (var item in jsonData["chatters"]["moderators"])
         {
-            chatUsers.Add(item.ToString());
+            chatUsers.Add(new User(item.ToString()));
         }
         foreach (var item in jsonData["chatters"]["viewers"])
         {
-            chatUsers.Add(item.ToString());
+            chatUsers.Add(new User(item.ToString()));
         }
         foreach (var item in jsonData["chatters"]["staff"])
         {
-            chatUsers.Add(item.ToString());
+            chatUsers.Add(new User(item.ToString()));
         }
         foreach (var item in jsonData["chatters"]["admins"])
         {
-            chatUsers.Add(item.ToString());
+            chatUsers.Add(new User(item.ToString()));
         }
         foreach (var item in jsonData["chatters"]["global_mods"])
         {
-            chatUsers.Add(item.ToString());
+            chatUsers.Add(new User(item.ToString()));
         }
         foreach (var item in jsonData["chatters"]["vips"])
         {
-            chatUsers.Add(item.ToString());
+            chatUsers.Add(new User(item.ToString()));
         }
-
         CompareNewToCurrentUsers();
     }
 
     void CompareNewToCurrentUsers()
     {
-        bool matched = false;
         if (File.Exists(Application.dataPath + "/UserData.json"))
         {
             //compare current and new list
@@ -154,19 +153,9 @@ public class TwitchChatController : MonoBehaviour
 
             for(int i = 0; i < jsonData["users"].Count; i++)
             {
-                currentUsers.Add(jsonData["users"][i]["userName"].ToString());
+                currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
             }
-           // newUsers.AddRange(new User(currentUsers.Except(chatUsers).ToString()));
-            
-            for (int i = 0; i < chatUsers.Count; i++)
-            {
-                bool result = currentUsers.Contains(chatUsers[i]);
-                if(!result)
-                {
-                    Debug.Log(result + string.Format(" : {0} is not currentUsers. add to file.", chatUsers[i]));
-                    newUsers.Add(new User(chatUsers[i]));
-                }
-            }
+            newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
         } else
         {// if file doesn't exsist go ahead and write current users
             WriteUsersToJson();
@@ -185,7 +174,7 @@ public class TwitchChatController : MonoBehaviour
         {
             writer.WriteObjectStart();
             writer.WritePropertyName("userName");
-            writer.Write(user);
+            writer.Write(user.UserName);
             writer.WritePropertyName("Exp");
             writer.Write(0);
             writer.WriteObjectEnd();
@@ -223,6 +212,7 @@ public class TwitchChatController : MonoBehaviour
             }
         }
     }
+
     void ReceiveMessage(String speaker, string message)
     {
         //print(String.Format("\r\n{0}: {1}", speaker, message));

@@ -1,16 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-[System.Serializable]
-public class User : List<User>
+public class User 
 {
-    public string UserName;
-    public int Exp = 0;
-    public User(string name, int xp)
-    {
-        this.UserName = name;
-        this.Exp = xp;
-    }
+    public string UserName { get; set; }
+    public int Exp { get; set; }
+    public int Coins { get; set; }
+    public int Power { get; set; }
+    public int Dodge { get; set; }
+    public int HP { get; set; }
+
+ 
+
     public User(string name)
     {
         this.UserName = name;
