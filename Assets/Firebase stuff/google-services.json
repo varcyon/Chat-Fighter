@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "538970390740",
+    "firebase_url": "https://chatfighter-3a784.firebaseio.com",
+    "project_id": "chatfighter-3a784",
+    "storage_bucket": "chatfighter-3a784.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:538970390740:android:57c42f57e7163662",
+        "android_client_info": {
+          "package_name": "com.VarcyonSariouGames.ChatFighter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "538970390740-0gt8jftl6ct8i6v1lu55gf18ioi1u09n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEassJcHsqN5d-RY-rblXHs2cZYvjwYn8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "538970390740-0gt8jftl6ct8i6v1lu55gf18ioi1u09n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "538970390740-lqttaguaul4pilrm7ak2lklorh237fvg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.VarcyonSariouGames.ChatFighter"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
