@@ -1,0 +1,50 @@
+{
+  "Twitch": [
+    {
+      "channel": "",
+      "Users": [""]
+    }
+  ],
+  "Youtube": [
+    {
+      "channel": "",
+      "Users": [""]
+    }
+  ],
+  "Mixer": [
+    {
+      "channel": "",
+      "Users": [""]
+    }
+  ],
+  "Users": [
+    {
+      "userName": "",
+      "platform": "",
+      "channel": "",
+      "exp": 0,
+      "coins": 0,
+      "items": [0],
+      "level": 0,
+      "hp": 0,
+      "power": 0,
+      "dodge": 0,
+      "armor": 0,
+      "weight": 0,
+      "speed": 0
+    }
+  ],
+  "items": [
+    {
+      "name": "",
+      "type": "",
+      "hp": 0,
+      "power": 0,
+      "dodge": 0,
+      "armor": 0,
+      "weight": 0,
+      "speed": 0
+      
+    }
+  ]
+}

@@ -23,7 +23,7 @@ public class ArenaSetup : MonoBehaviour
         if(playersJoining.Count == 7)
         {
             playersJoining.RemoveRange(1,1);
-            TwitchChatController.instance.SendTwitchMessage(String.Format("All positions filled!"));
+            TwitchChatController.instance.SendTwitchMessage(String.Format("All positions filled!"),null);
         }
         for (int i = 0; i < 6; i++)
         {

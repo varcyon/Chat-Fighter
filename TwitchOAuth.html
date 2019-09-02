@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Twitch Application Authorization</title>
+    <link href="twitchStyle.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+    <center>
+        <h1>Put the following key into your application to complete Twitch authorization:</h1>
+        <p id="key">Error. No key.</p>
+    </center>
+
+    <script type="text/javascript" language="javascript">
+	var url = window.location.href
+	var keyString = "#access_token="
+	var endString = "&"
+	var keyIndex = url.indexOf(keyString)
+	var endIndex = url.indexOf(endString, keyIndex)
+	if(keyIndex >= 0) document.getElementById('key').innerHTML = url.substring(keyIndex + keyString.length, endIndex >= 0 ? endIndex : url.length - 1)
+    </script>
+
+</body>
+</html>

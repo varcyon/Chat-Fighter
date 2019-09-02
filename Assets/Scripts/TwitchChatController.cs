@@ -6,23 +6,29 @@ using System;
 using System.Net.Sockets;
 using System.IO;
 using System.Net;
-using LitJson;
 using System.Text;
 using System.Linq;
+using TwitchLib.Unity;
+using TwitchLib.Client.Models;
+using TwitchLib.Client.Events;
+using Newtonsoft.Json;
+using TwitchLib.Api;
+using TwitchLib.Api.Models.Helix.Users;
+using TwitchLib.Api.Models.v5;
+using TwitchLib.Api.Internal;
+
+
 
 public class TwitchChatController : MonoBehaviour
 {
+    const String platform = "Twitch";
+    public string channelName;
+
     public static TwitchChatController instance;
     //Variables for Twitch IRC
 
-    TcpClient tcpClient;
-    StreamReader reader;
-    StreamWriter writer;
-    private readonly string userName = "chatfighter";
-    private readonly string password = "oauth:50s1tpqugy3wowbrejq2l2ab8hafb0";
-    public string channelName;
-    string prefixForSendingChatMessages;
-    DateTime lastMessageSendTime;
+    public Client client;
+
 
     //Variables for Twitch chat UI and Players
     public List<string> playersJoined = new List<string>();
@@ -34,8 +40,7 @@ public class TwitchChatController : MonoBehaviour
     public List<User> chatUsers = new List<User>();
     public List<User> currentUsers = new List<User>();
     public List<User> newUsers = new List<User>();
-    
-    Queue<string> sendMessageQueue;
+
     void MakeSingleton()
     {
         if (instance != null)
@@ -53,200 +58,172 @@ public class TwitchChatController : MonoBehaviour
         MakeSingleton();
         arenaSetup = arenaSetupUI.GetComponent<ArenaSetup>();
     }
-    public void Start()
+    public  void Start()
     {
-        sendMessageQueue = new Queue<string>();
-        prefixForSendingChatMessages = String.Format(":{0}{0}@{0}.tmi.twitch.tv PRIVMSG #{1} :", userName, channelName);
+        Debug.Log("Starting....");
         Connect();
+        client.OnMessageReceived += OnMessageReceived;
+        Debug.Log("streamer check complete");
     }
 
-    public void SendTwitchMessage(string message)
+    private void OnMessageReceived(object sender, OnMessageReceivedArgs e)
     {
-        sendMessageQueue.Enqueue(message);
+        string speaker = e.ChatMessage.DisplayName;
+        string message = e.ChatMessage.Message;
+        chatBox.text = chatBox.text + "\n" + String.Format("{0}: {1}", speaker, message);
+        ReceiveMessage(speaker, e);
     }
-
-
+    public void SendTwitchMessage(string message, OnMessageReceivedArgs e)
+    {
+        client.SendMessage(client.JoinedChannels[0], message);
+    }
     void Connect()
     {
-        tcpClient = new TcpClient("irc.twitch.tv", 6667);
-        reader = new StreamReader(tcpClient.GetStream());
-        writer = new StreamWriter(tcpClient.GetStream())
-        {
-            AutoFlush = true
-        };
-        writer.WriteLine(String.Format("PASS {0}\r\nNick {1}\r\nUser {1} 8 * :{1}", password, userName));
-        writer.WriteLine("JOIN #" + channelName);
-        lastMessageSendTime = DateTime.Now;
+        Application.runInBackground = true;
+        ConnectionCredentials credentials = new ConnectionCredentials(Secrets.botName, Secrets.Access_token);
+        client = new Client();
+        client.Initialize(credentials, channelName);
+        client.Connect();
     }
-
     void Update()
     {
-        if (!tcpClient.Connected)
-        {
-            Connect();
-        }
-        TryReceivingMessages();
-        TrySendingMessages();
     }
-    
+
     public void TryGettingChatters()
     {
-        JsonData jsonData;
+        dynamic data;
         string chattersRequest = string.Format("http://tmi.twitch.tv/group/user/{0}/chatters", channelName);
         WebRequest requestObject = WebRequest.Create(chattersRequest);
-        // requestObject.Credentials = new NetworkCredential("username", "password"); /// sending user and password if needed
-        requestObject.Method = "GET";
         HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
-        string responseJSON;
         using (Stream stream = responseObject.GetResponseStream())
         {
             StreamReader sr = new StreamReader(stream);
-            responseJSON = sr.ReadToEnd();
+            string responseJSON = sr.ReadToEnd();
             sr.Close();
-            jsonData = JsonMapper.ToObject(responseJSON);
+            data = JsonConvert.DeserializeObject(responseJSON);
+            Debug.Log(data);
         }
-        AddChatUsersToList(jsonData);
-       
+        //AddChatUsersToList(data);
+
     }
-    public void AddChatUsersToList(JsonData jsonData)
+    public void AddChatUsersToList(dynamic data)
     {
-        foreach (var item in jsonData["chatters"]["broadcaster"])
+        foreach (var item in data["chatters"]["broadcaster"])
         {
             chatUsers.Add(new User(item.ToString()));
         }
-        foreach (var item in jsonData["chatters"]["moderators"])
+        foreach (var item in data["chatters"]["moderators"])
         {
             chatUsers.Add(new User(item.ToString()));
         }
-        foreach (var item in jsonData["chatters"]["viewers"])
+        foreach (var item in data["chatters"]["viewers"])
         {
             chatUsers.Add(new User(item.ToString()));
         }
-        foreach (var item in jsonData["chatters"]["staff"])
+        foreach (var item in data["chatters"]["staff"])
         {
             chatUsers.Add(new User(item.ToString()));
         }
-        foreach (var item in jsonData["chatters"]["admins"])
+        foreach (var item in data["chatters"]["admins"])
         {
             chatUsers.Add(new User(item.ToString()));
         }
-        foreach (var item in jsonData["chatters"]["global_mods"])
+        foreach (var item in data["chatters"]["global_mods"])
         {
             chatUsers.Add(new User(item.ToString()));
         }
-        foreach (var item in jsonData["chatters"]["vips"])
+        foreach (var item in data["chatters"]["vips"])
         {
             chatUsers.Add(new User(item.ToString()));
         }
-        CompareNewToCurrentUsers();
+       CompareNewToCurrentUsers();
     }
 
     void CompareNewToCurrentUsers()
     {
-        if (File.Exists(Application.dataPath + "/UserData.json"))
-        {
-            //compare current and new list
-            String jsonFile;
-            JsonData jsonData;
-            jsonFile = File.ReadAllText(Application.dataPath + "/UserData.json");
-            jsonData = JsonMapper.ToObject(jsonFile);
+        //if (File.Exists(Application.dataPath + "/UserData.json"))
+       // {
+        //    //compare current and new list
+         //   String jsonFile;
+            
+        //    jsonFile = File.ReadAllText(Application.dataPath + "/UserData.json");
+         //   dynamic jsonData = JsonConvert.SerializeObject(jsonFile);
 
-            for(int i = 0; i < jsonData["users"].Count; i++)
-            {
-                currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
-            }
-            newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
-        } else
-        {// if file doesn't exsist go ahead and write current users
-            WriteUsersToJson();
-        }
+          //  for(int i = 0; i < jsonData["users"].Count; i++)
+          //  {
+           //     currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
+           // }
+           // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
+      //  } else
+        //{// if file doesn't exsist go ahead and write current users
+            WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers));
+       // }
     }
 
-    void WriteUsersToJson()
+    void WriteNewUsersToDB(dynamic data)
     {
-        //Writes users to Json file
-        StringBuilder sb = new StringBuilder();
-        JsonWriter writer = new JsonWriter(sb);
-        writer.WriteObjectStart();
-        writer.WritePropertyName("users");
-        writer.WriteArrayStart();
-        foreach (var user in chatUsers)
+        string chattersRequest = string.Format("https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data=", data);
+        WebRequest requestObject = WebRequest.Create(chattersRequest);
+        HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
+        using (Stream stream = responseObject.GetResponseStream())
         {
-            writer.WriteObjectStart();
-            writer.WritePropertyName("userName");
-            writer.Write(user.UserName);
-            writer.WritePropertyName("Exp");
-            writer.Write(0);
-            writer.WriteObjectEnd();
+            StreamReader sr = new StreamReader(stream);
+            string responseJSON = sr.ReadToEnd();
+            sr.Close();
         }
-        writer.WriteArrayEnd();
-        writer.WriteObjectEnd();
-        //Writing file
-        string path = Application.dataPath + "/UserData.json";
-        File.WriteAllText(path, sb.ToString());
-        Debug.Log("file written");
-    }
-    void TryReceivingMessages()
-    {
-        if (tcpClient.Available > 0)
-        {
-            //Reads Twitch message
-            var message = reader.ReadLine();
-            // print(String.Format("\r\nNew Message: {0}", message));
 
-            //Get speaker and message
-            var iCollon = message.IndexOf(":", 1);
-            if (iCollon > 0)
-            {
-                var command = message.Substring(1, iCollon);
-                if (command.Contains("PRIVMSG #"))
-                {
-                    var iBang = command.IndexOf("!");
-                    if (iBang > 0)
-                    {
-                        var speaker = command.Substring(0, iBang);
-                        var chatMessage = message.Substring(iCollon + 1);
-                        ReceiveMessage(speaker, chatMessage);
-                    }
-                }
-            }
-        }
+        // //Writes users to Json file
+        // StringBuilder sb = new StringBuilder();
+        // JsonWriter writer = new JsonWriter(sb);
+        // writer.WriteObjectStart();
+        // writer.WritePropertyName("users");
+        // writer.WriteArrayStart();
+        // foreach (var user in chatUsers)
+        // {
+        //     writer.WriteObjectStart();
+        //     writer.WritePropertyName("userName");
+        //     writer.Write(user.UserName);
+        //     writer.WritePropertyName("Exp");
+        //     writer.Write(0);
+        //     writer.WriteObjectEnd();
+        // }
+        // writer.WriteArrayEnd();
+        // writer.WriteObjectEnd();
+        // //Writing file
+        // string path = Application.dataPath + "/UserData.json";
+        // File.WriteAllText(path, sb.ToString());
+        // Debug.Log("file written");
     }
 
-    void ReceiveMessage(String speaker, string message)
+    void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
     {
-        //print(String.Format("\r\n{0}: {1}", speaker, message));
-        chatBox.text = chatBox.text + "\n" + String.Format("{0}: {1}", speaker, message);
-
         //Twitch Command
-        if (message.StartsWith("!hi"))
+        if (e.ChatMessage.Message.StartsWith("!hi"))
         {
-            SendTwitchMessage(String.Format("Hello, {0}", speaker));
+            SendTwitchMessage(String.Format("Hello, {0}", speaker), e);
         }
 
-        if (message.StartsWith("!join"))
+        if (e.ChatMessage.Message.StartsWith("!join"))
         {
             arenaSetup.playersJoining.Add(speaker);
-            SendTwitchMessage(String.Format("Adding, {0} to the game!", speaker));
+            SendTwitchMessage(String.Format("Adding, {0} to the game!", speaker), e);
         }
-        if (message.StartsWith("!drop"))
+        if (e.ChatMessage.Message.StartsWith("!drop"))
         {
             arenaSetup.playersJoining.Remove(speaker);
-            SendTwitchMessage(String.Format("Removing, {0} from the game!", speaker));
+            SendTwitchMessage(String.Format("Removing, {0} from the game!", speaker), e);
         }
 
 
     }
-    void TrySendingMessages()
-    {
-        if (DateTime.Now - lastMessageSendTime > TimeSpan.FromSeconds(2))
-        {
-            if (sendMessageQueue.Count > 0)
-            {
-                var message = sendMessageQueue.Dequeue();
-                writer.WriteLine(String.Format("{0}{1}", prefixForSendingChatMessages, message));
-                lastMessageSendTime = DateTime.Now;
-            }
-        }
+
+    public void  GetUserData(){
+
+       TwitchAPI api = new TwitchAPI();
+        api.Settings.ClientId = Secrets.Client_ID;
+        api.Settings.AccessToken = Secrets.Access_token;
+        dynamic results =  api.Users.v5.GetUserAsync("varcy0n");
+        
     }
+
 }
