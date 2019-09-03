@@ -165,11 +165,11 @@ public class TwitchChatController : MonoBehaviour
     IEnumerator WriteNewUsersToDB(string data)
     {
         
-        string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/";
+        string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data="+data;
         Debug.Log("start writing......");
-        List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
-        wwwForm.Add(new MultipartFormDataSection("data",data));
-        UnityWebRequest www = UnityWebRequest.Post(url, wwwForm);
+        // List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
+        // wwwForm.Add(new MultipartFormDataSection("data",data));
+        UnityWebRequest www = UnityWebRequest.Get(url);
         yield return www.SendWebRequest();
         if (www.isNetworkError || www.isHttpError)
         {
@@ -180,7 +180,7 @@ public class TwitchChatController : MonoBehaviour
             Debug.Log(www.downloadHandler.text);
         }
     }
-
+    
     void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
     {
         //Twitch Command
@@ -206,10 +206,6 @@ public class TwitchChatController : MonoBehaviour
     public void GetUserData()
     {
 
-        TwitchAPI api = new TwitchAPI();
-        api.Settings.ClientId = Secrets.Client_ID;
-        api.Settings.AccessToken = Secrets.Access_token;
-        dynamic results = api.Users.v5.GetUserAsync("varcy0n");
 
     }
 
