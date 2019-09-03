@@ -16,6 +16,7 @@ using TwitchLib.Api;
 using TwitchLib.Api.Models.Helix.Users;
 using TwitchLib.Api.Models.v5;
 using TwitchLib.Api.Internal;
+using UnityEngine.Networking;
 
 
 
@@ -58,7 +59,7 @@ public class TwitchChatController : MonoBehaviour
         MakeSingleton();
         arenaSetup = arenaSetupUI.GetComponent<ArenaSetup>();
     }
-    public  void Start()
+    public void Start()
     {
         Debug.Log("Starting....");
         Connect();
@@ -101,9 +102,9 @@ public class TwitchChatController : MonoBehaviour
             string responseJSON = sr.ReadToEnd();
             sr.Close();
             data = JsonConvert.DeserializeObject(responseJSON);
-            Debug.Log(data);
+            //Debug.Log(data);
         }
-        //AddChatUsersToList(data);
+        AddChatUsersToList(data);
 
     }
     public void AddChatUsersToList(dynamic data)
@@ -136,63 +137,47 @@ public class TwitchChatController : MonoBehaviour
         {
             chatUsers.Add(new User(item.ToString()));
         }
-       CompareNewToCurrentUsers();
+        Debug.Log(JsonConvert.SerializeObject(chatUsers));
+        CompareNewToCurrentUsers();
     }
 
     void CompareNewToCurrentUsers()
     {
         //if (File.Exists(Application.dataPath + "/UserData.json"))
-       // {
+        // {
         //    //compare current and new list
-         //   String jsonFile;
-            
-        //    jsonFile = File.ReadAllText(Application.dataPath + "/UserData.json");
-         //   dynamic jsonData = JsonConvert.SerializeObject(jsonFile);
+        //   String jsonFile;
 
-          //  for(int i = 0; i < jsonData["users"].Count; i++)
-          //  {
-           //     currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
-           // }
-           // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
-      //  } else
+        //    jsonFile = File.ReadAllText(Application.dataPath + "/UserData.json");
+        //   dynamic jsonData = JsonConvert.SerializeObject(jsonFile);
+
+        //  for(int i = 0; i < jsonData["users"].Count; i++)
+        //  {
+        //     currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
+        // }
+        // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
+        //  } else
         //{// if file doesn't exsist go ahead and write current users
-            WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers));
-       // }
+        StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers).ToString()));
+        // }
     }
 
-    void WriteNewUsersToDB(dynamic data)
+    IEnumerator WriteNewUsersToDB(string data)
     {
-        string chattersRequest = string.Format("https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data=", data);
-        WebRequest requestObject = WebRequest.Create(chattersRequest);
-        HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
-        using (Stream stream = responseObject.GetResponseStream())
+        string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/";
+        Debug.Log("start writing......");
+        List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
+        wwwForm.Add(new MultipartFormDataSection("data",data));
+        UnityWebRequest www = UnityWebRequest.Post(url, wwwForm);
+        yield return www.SendWebRequest();
+        if (www.isNetworkError || www.isHttpError)
         {
-            StreamReader sr = new StreamReader(stream);
-            string responseJSON = sr.ReadToEnd();
-            sr.Close();
+            Debug.LogError(www.error);
         }
-
-        // //Writes users to Json file
-        // StringBuilder sb = new StringBuilder();
-        // JsonWriter writer = new JsonWriter(sb);
-        // writer.WriteObjectStart();
-        // writer.WritePropertyName("users");
-        // writer.WriteArrayStart();
-        // foreach (var user in chatUsers)
-        // {
-        //     writer.WriteObjectStart();
-        //     writer.WritePropertyName("userName");
-        //     writer.Write(user.UserName);
-        //     writer.WritePropertyName("Exp");
-        //     writer.Write(0);
-        //     writer.WriteObjectEnd();
-        // }
-        // writer.WriteArrayEnd();
-        // writer.WriteObjectEnd();
-        // //Writing file
-        // string path = Application.dataPath + "/UserData.json";
-        // File.WriteAllText(path, sb.ToString());
-        // Debug.Log("file written");
+        else
+        {
+            Debug.Log(www.downloadHandler.text);
+        }
     }
 
     void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
@@ -217,13 +202,14 @@ public class TwitchChatController : MonoBehaviour
 
     }
 
-    public void  GetUserData(){
+    public void GetUserData()
+    {
 
-       TwitchAPI api = new TwitchAPI();
+        TwitchAPI api = new TwitchAPI();
         api.Settings.ClientId = Secrets.Client_ID;
         api.Settings.AccessToken = Secrets.Access_token;
-        dynamic results =  api.Users.v5.GetUserAsync("varcy0n");
-        
+        dynamic results = api.Users.v5.GetUserAsync("varcy0n");
+
     }
 
 }

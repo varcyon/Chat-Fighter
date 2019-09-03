@@ -24,17 +24,10 @@ exports.getTwitchStreamers = functions.https.onRequest(async (request, response)
 
 exports.AddNewPlayersToStreamer = functions.https.onRequest((request, response) => {
     const json = request.query.data
+    console.log(json)
     response.send(json)
 
-    // 
-    //     const snapshot = await admin.firestore().collection(`${platform}Streamers`).get()
-    //     const results = Array()
-    //     snapshot.forEach(docSnap => {
-    //         const data = docSnap.data()
-    //         results.push(data)
-    //     })
-    //     response.send(results)
-
+   
 })
 
 exports.getItems = functions.https.onRequest(async (request, response) => {
@@ -49,17 +42,6 @@ exports.getItems = functions.https.onRequest(async (request, response) => {
     }
 })
 
-// export const notifyNewItems = 
-// functions.firestore.document("Items/Wood_Sword").onUpdate(change => {
-//     const after = change.after.data()
-//     const payload = {
-//         data:{
-//             temp: String(after!.temp),
-//             conditions: after!.conditions
-//         }
-//     }
-//     return admin.messaging().sendToTopic("weather_boston-ma-us", payload)
-// })
 
 export const getUsersFighters =
     functions.https.onRequest(async (request, response) => {

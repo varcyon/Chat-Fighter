@@ -2221,7 +2221,7 @@ PrefabInstance:
     - target: {fileID: 4004081208167519938, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 301.5
+      value: 319
       objectReference: {fileID: 0}
     - target: {fileID: 4854467644795476618, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
@@ -2818,7 +2818,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_HighlightedColor: {r: 0.048704147, g: 0, b: 1, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
