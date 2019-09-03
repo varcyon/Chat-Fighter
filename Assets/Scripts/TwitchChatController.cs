@@ -164,6 +164,7 @@ public class TwitchChatController : MonoBehaviour
 
     IEnumerator WriteNewUsersToDB(string data)
     {
+        
         string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/";
         Debug.Log("start writing......");
         List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
