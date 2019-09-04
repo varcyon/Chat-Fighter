@@ -24,6 +24,7 @@ public class TwitchChatController : MonoBehaviour
 {
     const String platform = "Twitch";
     public string channelName;
+    public string userNameTest = "varcy0n";
 
     public static TwitchChatController instance;
     //Variables for Twitch IRC
@@ -95,6 +96,7 @@ public class TwitchChatController : MonoBehaviour
         dynamic data;
         string chattersRequest = string.Format("http://tmi.twitch.tv/group/user/{0}/chatters", channelName);
         WebRequest requestObject = WebRequest.Create(chattersRequest);
+        // requestObject.Headers.Add("Authorization", "Basic ashAHasd87asdHasdas");
         HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
         using (Stream stream = responseObject.GetResponseStream())
         {
@@ -164,8 +166,8 @@ public class TwitchChatController : MonoBehaviour
 
     IEnumerator WriteNewUsersToDB(string data)
     {
-        
-        string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data="+data;
+
+        string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data=" + data;
         Debug.Log("start writing......");
         // List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
         // wwwForm.Add(new MultipartFormDataSection("data",data));
@@ -179,8 +181,10 @@ public class TwitchChatController : MonoBehaviour
         {
             Debug.Log(www.downloadHandler.text);
         }
+
+
     }
-    
+
     void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
     {
         //Twitch Command
@@ -203,10 +207,52 @@ public class TwitchChatController : MonoBehaviour
 
     }
 
-    public void GetUserData()
+    public void GetUserData(string userName)
     {
+        //UserInfo data;
+        List<UserInfo> userInfo = new List<UserInfo>();
+        string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userNameTest);
+        WebRequest requestObject = WebRequest.Create(userDataRequest);
+        requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
+        HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
+        using (Stream stream = responseObject.GetResponseStream())
+        {
+            StreamReader sr = new StreamReader(stream);
+            string responseJSON = sr.ReadToEnd();
+            sr.Close();
+            UserInfo data = JsonConvert.DeserializeObject<UserInfo>(responseJSON);
+            Debug.Log(data.Data[0].Id);
 
+        }
+        // foreach (var item in data["data"])
+        // {
+        //     userInfo.Add(new UserInfo(item.id, item.login, item.DisplayName, item.imageUrl));
+        // }
+        // Debug.Log(userInfo);
 
+        // foreach (var item in data["data"])
+        // {
+        //     userInfo.Add(new UserInfo());
+        //     userInfo.r
+        // }
+        //GetTexture(responseJSON);
     }
+
+    IEnumerator GetTexture(string playerTexture)
+    {
+        UnityWebRequest www = UnityWebRequestTexture.GetTexture(playerTexture);
+        yield return www.SendWebRequest();
+
+        if (www.isNetworkError || www.isHttpError)
+        {
+            Debug.Log(www.error);
+        }
+        else
+        {
+            Texture myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+        }
+    }
+
+
 
 }

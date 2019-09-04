@@ -10,7 +10,7 @@ public class User
     public string UserName;
 
 
-    public  User(string userName)
+    public User(string userName)
     {
         this.UserName = userName;
     }
