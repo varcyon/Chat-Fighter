@@ -18,7 +18,10 @@ using TwitchLib.Api.Models.v5;
 using TwitchLib.Api.Internal;
 using UnityEngine.Networking;
 
-
+// getting and using the data from
+// the database
+//  FirestoreDoc doc = JsonConvert.DeserializeObject<FirestoreDoc>(www.downloadHandler.text);
+//  Debug.Log(doc._fieldsProto.id.stringValue);
 
 public class TwitchChatController : MonoBehaviour
 {
@@ -42,6 +45,7 @@ public class TwitchChatController : MonoBehaviour
     public List<User> chatUsers = new List<User>();
     public List<User> currentUsers = new List<User>();
     public List<User> newUsers = new List<User>();
+    public List<UserInfo> userInfo = new List<UserInfo>();
 
     void MakeSingleton()
     {
@@ -104,7 +108,7 @@ public class TwitchChatController : MonoBehaviour
             string responseJSON = sr.ReadToEnd();
             sr.Close();
             data = JsonConvert.DeserializeObject(responseJSON);
-            //Debug.Log(data);
+            Debug.Log(data);
         }
         AddChatUsersToList(data);
 
@@ -143,25 +147,58 @@ public class TwitchChatController : MonoBehaviour
         CompareNewToCurrentUsers();
     }
 
-    void CompareNewToCurrentUsers()
+    IEnumerator DoesChannelExist()
     {
-        //if (File.Exists(Application.dataPath + "/UserData.json"))
-        // {
-        //    //compare current and new list
-        //   String jsonFile;
 
-        //    jsonFile = File.ReadAllText(Application.dataPath + "/UserData.json");
-        //   dynamic jsonData = JsonConvert.SerializeObject(jsonFile);
+        string channelExistUrl = "https://us-central1-tough-ivy-251300.cloudfunctions.net/doesStreamerExist/?platform=" + platform + "&channel=" + channelName;
 
-        //  for(int i = 0; i < jsonData["users"].Count; i++)
-        //  {
-        //     currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
-        // }
-        // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
-        //  } else
-        //{// if file doesn't exsist go ahead and write current users
-        StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers).ToString()));
-        // }
+        // List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
+        // wwwForm.Add(new MultipartFormDataSection("data",data));
+        Debug.Log("start query......");
+        UnityWebRequest www = UnityWebRequest.Get(channelExistUrl);
+        yield return www.SendWebRequest();
+        if (www.isNetworkError || www.isHttpError)
+        {
+            Debug.LogError(www.error);
+        }
+        else
+        {
+            if (www.downloadHandler.text == "1")
+            {
+                yield return "yes";
+            }
+            else if (www.downloadHandler.text == "0")
+            {
+                yield return "no";
+            }
+        }
+    }
+    IEnumerator CompareNewToCurrentUsers()
+    {
+        //DOES STREAMER EXIST
+        Debug.Log("Does streamer exist? ");
+        CoroutineWithData cd = new CoroutineWithData(this, DoesChannelExist());
+        yield return cd.coroutine;
+        Debug.Log(cd.result);
+        if((string)cd.result == "yes"){
+            //if(){
+            //  for(int i = 0; i < jsonData["users"].Count; i++)
+            //  {
+            //     currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
+            // }
+            // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
+            //} else {
+        } else if((String)cd.result== "no")
+        {
+            newUsers = chatUsers;
+            StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
+            // if file doesn't exsist go ahead and write current users
+            //StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers)));
+            // }
+        }
+       
+
+        
     }
 
     IEnumerator WriteNewUsersToDB(string data)
@@ -210,8 +247,8 @@ public class TwitchChatController : MonoBehaviour
     public void GetUserData(string userName)
     {
         //UserInfo data;
-        List<UserInfo> userInfo = new List<UserInfo>();
-        string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userNameTest);
+
+        string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userName);
         WebRequest requestObject = WebRequest.Create(userDataRequest);
         requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
         HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
@@ -222,20 +259,10 @@ public class TwitchChatController : MonoBehaviour
             sr.Close();
             UserInfo data = JsonConvert.DeserializeObject<UserInfo>(responseJSON);
             Debug.Log(data.Data[0].Id);
-
+            Debug.Log(data.Data[0].Login);
+            Debug.Log(data.Data[0].Display_name);
+            Debug.Log(data.Data[0].Profile_image_url);
         }
-        // foreach (var item in data["data"])
-        // {
-        //     userInfo.Add(new UserInfo(item.id, item.login, item.DisplayName, item.imageUrl));
-        // }
-        // Debug.Log(userInfo);
-
-        // foreach (var item in data["data"])
-        // {
-        //     userInfo.Add(new UserInfo());
-        //     userInfo.r
-        // }
-        //GetTexture(responseJSON);
     }
 
     IEnumerator GetTexture(string playerTexture)

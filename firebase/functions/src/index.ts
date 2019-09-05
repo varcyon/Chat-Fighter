@@ -6,9 +6,8 @@ admin.initializeApp()
 // https://firebase.google.com/docs/functions/write-firebase-functions
 
 exports.getTwitchStreamers = functions.https.onRequest(async (request, response) => {
-    const platform = request.query.platform
     try {
-        const snapshot = await admin.firestore().collection(`${platform}Streamers`).get()
+        const snapshot = await admin.firestore().collection(`TwitchStreamers`).get()
         const results = Array()
         snapshot.forEach(docSnap => {
             const data = docSnap.data()
@@ -21,13 +20,25 @@ exports.getTwitchStreamers = functions.https.onRequest(async (request, response)
         response.status(500).send(error)
     }
 })
+exports.doesStreamerExist = functions.https.onRequest(async (request, response) => {
+    const channel = request.query.channel
+    const platform = request.query.platform
+    try {
+        const data = await admin.firestore().collection(`${platform}Streamers`).doc(`${channel}`).get()
+        if (!data.exists) {
+            response.send("0")
+        } else {
+            response.send("1")
+        }
+    } catch (error) {
+        console.log(error)
+        response.status(500).send(error)
+    }
+})
 
 exports.AddNewPlayersToStreamer = functions.https.onRequest((request, response) => {
-    const json = request.query.data
-    console.log(json)
-    response.send(json)
-
-   
+    const dict = request.query.data
+    console.log(dict)
 })
 
 exports.getItems = functions.https.onRequest(async (request, response) => {

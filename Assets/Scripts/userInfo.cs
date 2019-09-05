@@ -7,20 +7,21 @@ using UnityEngine;
 
 public class UserInfo
 {
-    public Datum[] Data { get; set; }
+    public Datum[] Data;
+
 }
 
 public class Datum
 {
-    public string Id { get; set; }
-    public string Login { get; set; }
-    public string Display_name { get; set; }
-    public string Type { get; set; }
-    public string Broadcaster_type { get; set; }
-    public string Description { get; set; }
-    public string Profile_image_url { get; set; }
-    public string Offline_image_url { get; set; }
-    public int View_count { get; set; }
+    public string Id;
+    public string Login;
+    public string Display_name;
+    public string Type;
+    public string Broadcaster_type;
+    public string Description;
+    public string Profile_image_url;
+    public string Offline_image_url;
+    public int View_count;
 }
 
 
