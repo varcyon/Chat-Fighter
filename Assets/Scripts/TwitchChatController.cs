@@ -17,6 +17,9 @@ using TwitchLib.Api.Models.Helix.Users;
 using TwitchLib.Api.Models.v5;
 using TwitchLib.Api.Internal;
 using UnityEngine.Networking;
+using Firebase.Functions;
+using Firebase.Extensions;
+using Firebase;
 
 // getting and using the data from
 // the database
@@ -25,6 +28,8 @@ using UnityEngine.Networking;
 
 public class TwitchChatController : MonoBehaviour
 {
+    DependencyStatus dependencyStatus = DependencyStatus.UnavailableOther;
+    FirebaseFunctions functions;
     const String platform = "Twitch";
     public string channelName;
     public string userNameTest = "varcy0n";
@@ -42,10 +47,12 @@ public class TwitchChatController : MonoBehaviour
     public Text chatBox;
 
     //lists for getting twitch chat users
-    public List<User> chatUsers = new List<User>();
     public List<User> currentUsers = new List<User>();
+    public List<User> chatUsers = new List<User>();
+
     public List<User> newUsers = new List<User>();
     public List<UserInfo> userInfo = new List<UserInfo>();
+    public bool StreamerExist;
 
     void MakeSingleton()
     {
@@ -67,6 +74,7 @@ public class TwitchChatController : MonoBehaviour
     public void Start()
     {
         Debug.Log("Starting....");
+        checkFirebaseDepen();
         Connect();
         client.OnMessageReceived += OnMessageReceived;
         Debug.Log("streamer check complete");
@@ -97,6 +105,10 @@ public class TwitchChatController : MonoBehaviour
 
     public void TryGettingChatters()
     {
+        chatUsers = new List<User>();
+        newUsers = new List<User>();
+        userInfo = new List<UserInfo>();
+
         dynamic data;
         string chattersRequest = string.Format("http://tmi.twitch.tv/group/user/{0}/chatters", channelName);
         WebRequest requestObject = WebRequest.Create(chattersRequest);
@@ -144,7 +156,7 @@ public class TwitchChatController : MonoBehaviour
             chatUsers.Add(new User(item.ToString()));
         }
         Debug.Log(JsonConvert.SerializeObject(chatUsers));
-        CompareNewToCurrentUsers();
+        StartCoroutine(CompareNewToCurrentUsers());
     }
 
     IEnumerator DoesChannelExist()
@@ -157,6 +169,7 @@ public class TwitchChatController : MonoBehaviour
         Debug.Log("start query......");
         UnityWebRequest www = UnityWebRequest.Get(channelExistUrl);
         yield return www.SendWebRequest();
+        Debug.Log(www.downloadHandler.text);
         if (www.isNetworkError || www.isHttpError)
         {
             Debug.LogError(www.error);
@@ -165,11 +178,11 @@ public class TwitchChatController : MonoBehaviour
         {
             if (www.downloadHandler.text == "1")
             {
-                yield return "yes";
+                StreamerExist = true;
             }
             else if (www.downloadHandler.text == "0")
             {
-                yield return "no";
+                StreamerExist = false;
             }
         }
     }
@@ -177,10 +190,9 @@ public class TwitchChatController : MonoBehaviour
     {
         //DOES STREAMER EXIST
         Debug.Log("Does streamer exist? ");
-        CoroutineWithData cd = new CoroutineWithData(this, DoesChannelExist());
-        yield return cd.coroutine;
-        Debug.Log(cd.result);
-        if((string)cd.result == "yes"){
+        yield return StartCoroutine(DoesChannelExist());
+        if (StreamerExist == true)
+        {
             //if(){
             //  for(int i = 0; i < jsonData["users"].Count; i++)
             //  {
@@ -188,39 +200,67 @@ public class TwitchChatController : MonoBehaviour
             // }
             // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
             //} else {
-        } else if((String)cd.result== "no")
+        }
+        else if (StreamerExist == false)
         {
-            newUsers = chatUsers;
+            foreach (var user in chatUsers)
+            {   
+                int i = 0;    
+                GetUserData(user.UserName,i);
+                i++;
+            }
+
             StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
+
+
             // if file doesn't exsist go ahead and write current users
             //StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers)));
             // }
         }
-       
 
-        
     }
-
-    IEnumerator WriteNewUsersToDB(string data)
+    IEnumerator WriteNewUsersToDB(string json)
     {
+        var func = functions.GetHttpsCallable("AddNewPlayersToStreamer");
+        var data = new Dictionary<string, object>();
+        data["dataFromUnity"] = json;
 
-        string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data=" + data;
-        Debug.Log("start writing......");
-        // List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
-        // wwwForm.Add(new MultipartFormDataSection("data",data));
-        UnityWebRequest www = UnityWebRequest.Get(url);
-        yield return www.SendWebRequest();
-        if (www.isNetworkError || www.isHttpError)
+        var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
         {
-            Debug.LogError(www.error);
-        }
-        else
-        {
-            Debug.Log(www.downloadHandler.text);
-        }
+            if (callTask.IsFaulted)
+            {
+                // The function unexpectedly failed.
+                Debug.Log("FAILED!");
+                Debug.Log(String.Format("  Error: {0}", callTask.Exception));
+                return;
+            }
 
-
+            // The function succeeded.
+            var result = (IDictionary)callTask.Result.Data;
+            Debug.Log(String.Format("Results {0}", result["fuctionran"]));
+        });
+        yield return new WaitUntil(() => task.IsCompleted);
     }
+    // IEnumerator WriteNewUsersToDB(String data)
+    // {
+
+    //     string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data=";
+    //     Debug.Log("start writing......");
+    //     // List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
+    //     // wwwForm.Add(new MultipartFormDataSection("data",data));
+    //     UnityWebRequest www = UnityWebRequest.Get(url);
+    //     yield return www.SendWebRequest();
+    //     if (www.isNetworkError || www.isHttpError)
+    //     {
+    //         Debug.LogError(www.error);
+    //     }
+    //     else
+    //     {
+    //         Debug.Log(www.downloadHandler.text);
+    //     }
+    //     Debug.Log("done writing");
+
+    // }
 
     void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
     {
@@ -244,10 +284,8 @@ public class TwitchChatController : MonoBehaviour
 
     }
 
-    public void GetUserData(string userName)
+    public void GetUserData(string userName,int i)
     {
-        //UserInfo data;
-
         string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userName);
         WebRequest requestObject = WebRequest.Create(userDataRequest);
         requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
@@ -258,10 +296,8 @@ public class TwitchChatController : MonoBehaviour
             string responseJSON = sr.ReadToEnd();
             sr.Close();
             UserInfo data = JsonConvert.DeserializeObject<UserInfo>(responseJSON);
-            Debug.Log(data.Data[0].Id);
-            Debug.Log(data.Data[0].Login);
-            Debug.Log(data.Data[0].Display_name);
-            Debug.Log(data.Data[0].Profile_image_url);
+            //Debug.Log(data.Data[i].Id);
+            newUsers.Add(new User(data.Data[i].Id,data.Data[i].Display_name,data.Data[i].Login,data.Data[i].Profile_image_url,channelName));
         }
     }
 
@@ -280,6 +316,32 @@ public class TwitchChatController : MonoBehaviour
         }
     }
 
+
+    void checkFirebaseDepen()
+    {
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        {
+            dependencyStatus = task.Result;
+            if (dependencyStatus == DependencyStatus.Available)
+            {
+                InitializeFirebase();
+            }
+            else
+            {
+                Debug.LogError(
+                  "Could not resolve all Firebase dependencies: " + dependencyStatus);
+            }
+        });
+    }
+    protected virtual void InitializeFirebase()
+    {
+        functions = FirebaseFunctions.DefaultInstance;
+
+        // To use a local emulator, uncomment this line:
+        //   functions.UseFunctionsEmulator("http://localhost:5005");
+        // Or from an Android emulator:
+        //   functions.UseFunctionsEmulator("http://10.0.2.2:5005");
+    }
 
 
 }

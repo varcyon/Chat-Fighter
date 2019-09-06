@@ -2111,7 +2111,7 @@ PrefabInstance:
     - target: {fileID: 2827902469351139705, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
       propertyPath: channelName
-      value: vayc0n
+      value: spherous
       objectReference: {fileID: 0}
     - target: {fileID: 2827902469351139686, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
@@ -2221,7 +2221,7 @@ PrefabInstance:
     - target: {fileID: 4004081208167519938, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 308
+      value: 331
       objectReference: {fileID: 0}
     - target: {fileID: 4854467644795476618, guid: b6852a1afcf992c44981fb4444c71e6c,
         type: 3}

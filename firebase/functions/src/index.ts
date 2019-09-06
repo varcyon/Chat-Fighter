@@ -36,10 +36,50 @@ exports.doesStreamerExist = functions.https.onRequest(async (request, response) 
     }
 })
 
-exports.AddNewPlayersToStreamer = functions.https.onRequest((request, response) => {
-    const dict = request.query.data
-    console.log(dict)
+exports.AddNewPlayersToStreamer = functions.https.onCall(async (data) => {
+    const db = admin.firestore()
+    const jsonObj = JSON.parse(data.dataFromUnity)
+    //check if user already exists
+    //////if does exist, check if they exist on streamers player list
+    ////////if they do.. do nothing
+    //////if they do not exist on streamers player list just add to the Fighters array
+    //
+    //if not,add user to Users
+    try {
+        jsonObj.forEach(async user => {
+            const userExist = await db.collection("Users").doc(`${user.UserName}`).get()
+            if (!userExist.exists) {
+                console.log("doesn't exist")
+                 const setDoc = await db.collection("Users").doc(`${user.UserName}`).set(user)
+                    console.log(setDoc) 
+            } else {
+                console.log("does exists")
+            }
+            // console.log(user.Id)
+            // console.log(user.DisplayName)
+            // console.log(user.UserName)
+            // console.log(user.ProfileUrl)
+            // console.log(user.Fighters)d
+
+        }
+        )
+    } catch (error) {
+        console.log(error)
+    }
+    return {
+        fuctionran: "the fuction ran"
+    }
 })
+
+
+
+
+
+// Add a new document in collection "cities" with ID 'LA'
+// let setDoc = db.collection('cities').doc('LA').set(data);
+
+
+
 
 exports.getItems = functions.https.onRequest(async (request, response) => {
     const item = request.query.item
@@ -61,7 +101,7 @@ export const getUsersFighters =
             const fightersSnapshot = await admin.firestore().doc(`Users/${userName}`).get()
             const fighters = fightersSnapshot.data()!.fighters
             const promises = Array()
-            fighters.forEach(fighter => {
+            fighters.forEach((fighter: any) => {
                 const f = admin.firestore().doc(`TwitchStreamers/${fighter}/Fighters/${userName}`).get()
                 promises.push(f)
             })
@@ -78,3 +118,25 @@ export const getUsersFighters =
             response.status(500).send(error)
         }
     })
+
+    // exports.addNumbers = functions.https.onCall((data) => {
+    //     // Numbers passed from the client.
+    //     const firstNumber = data.firstNumber;
+    //     const secondNumber = data.secondNumber;
+
+    //     // Checking that attributes are present and are numbers.
+    //     if (!Number.isFinite(firstNumber) || !Number.isFinite(secondNumber)) {
+    //       // Throwing an HttpsError so that the client gets the error details.
+    //       throw new functions.https.HttpsError('invalid-argument', 'The function ' +
+    //           'must be called with two arguments "firstNumber" and "secondNumber" ' +
+    //           'which must both be numbers.');
+    //     }
+
+    //     // returning result.
+    //     return {
+    //       firstNumber: firstNumber,
+    //       secondNumber: secondNumber,
+    //       operator: '+',
+    //       operationResult: firstNumber + secondNumber,
+    //     };
+    //   });

@@ -11,7 +11,7 @@ public class User
     public string DisplayName;
     public string UserName;
     public string ProfileUrl;
-    public List<string> Fighters;
+    public List<string> Fighters = new List<string>();
 
 
     public User(string userName)
@@ -19,7 +19,8 @@ public class User
         this.UserName = userName;
     }
 
-    public User(string id, string displayName,string login,string profileUrl,string channelName){
+    public User(string id, string displayName, string login, string profileUrl, string channelName)
+    {
         this.Id = id;
         this.DisplayName = displayName;
         this.UserName = login;
