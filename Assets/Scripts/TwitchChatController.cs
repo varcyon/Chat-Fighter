@@ -32,7 +32,6 @@ public class TwitchChatController : MonoBehaviour
     FirebaseFunctions functions;
     const String platform = "Twitch";
     public string channelName;
-    public string userNameTest = "varcy0n";
 
     public static TwitchChatController instance;
     //Variables for Twitch IRC
@@ -52,7 +51,10 @@ public class TwitchChatController : MonoBehaviour
 
     public List<User> newUsers = new List<User>();
     public List<UserInfo> userInfo = new List<UserInfo>();
+    public List<Player> currentPlayers = new List<Player>();
     public bool StreamerExist;
+    public string channelData;
+    public string channelID;
 
     void MakeSingleton()
     {
@@ -156,35 +158,69 @@ public class TwitchChatController : MonoBehaviour
             chatUsers.Add(new User(item.ToString()));
         }
         Debug.Log(JsonConvert.SerializeObject(chatUsers));
-        StartCoroutine(CompareNewToCurrentUsers());
+       StartCoroutine(CompareNewToCurrentUsers()) ;
     }
 
     IEnumerator DoesChannelExist()
     {
+        GetChannelData();
+        var func = functions.GetHttpsCallable("doesChannelExist");
+        var data = new Dictionary<string, object>();
+        data["platform"] = platform;
+        data["channel"] = channelName;
+        data["channelData"] = channelData;
 
-        string channelExistUrl = "https://us-central1-tough-ivy-251300.cloudfunctions.net/doesStreamerExist/?platform=" + platform + "&channel=" + channelName;
-
-        // List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
-        // wwwForm.Add(new MultipartFormDataSection("data",data));
-        Debug.Log("start query......");
-        UnityWebRequest www = UnityWebRequest.Get(channelExistUrl);
-        yield return www.SendWebRequest();
-        Debug.Log(www.downloadHandler.text);
-        if (www.isNetworkError || www.isHttpError)
+        var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
         {
-            Debug.LogError(www.error);
-        }
-        else
-        {
-            if (www.downloadHandler.text == "1")
+            if (callTask.IsFaulted)
+            {
+                // The function unexpectedly failed.
+                Debug.Log("FAILED!");
+                Debug.Log(String.Format("  Error: {0}", callTask.Exception));
+                return;
+            }
+            // The function succeeded.
+            var result = (IDictionary)callTask.Result.Data;
+            Debug.Log(String.Format("Results {0}", result["StreamerExists"]));
+            if (result["StreamerExists"].ToString() == "1")
             {
                 StreamerExist = true;
+                Debug.Log("Streamer Exists");
             }
-            else if (www.downloadHandler.text == "0")
+            else if (result["StreamerExists"].ToString() == "0")
             {
                 StreamerExist = false;
+                Debug.Log("Streamer doesn't Exists");
             }
-        }
+        });
+        yield return new WaitUntil(() => task.IsCompleted);
+
+
+
+    }
+    public IEnumerator QueryChannelsCurrentPlayers()
+    {
+        var func = functions.GetHttpsCallable("QueryChannelsCurrentPlayers");
+        var data = new Dictionary<string, object>();
+        data["platform"] = platform;
+        data["channel"] = channelName;
+
+        var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
+        {
+            if (callTask.IsFaulted)
+            {
+                // The function unexpectedly failed.
+                Debug.Log("FAILED!");
+                Debug.Log(String.Format("  Error: {0}", callTask.Exception));
+                return;
+            }
+
+            // The function succeeded.
+            var result = (IDictionary)callTask.Result.Data;
+            Debug.Log(String.Format("Results {0}", result["fuctionran"]));
+        });
+        yield return new WaitUntil(() => task.IsCompleted);
+
     }
     IEnumerator CompareNewToCurrentUsers()
     {
@@ -193,35 +229,36 @@ public class TwitchChatController : MonoBehaviour
         yield return StartCoroutine(DoesChannelExist());
         if (StreamerExist == true)
         {
-            //if(){
+            Debug.Log("streamer exists");
+            //QueryChannelsCurrentPlayers();
+            //pull players from streamer doc
             //  for(int i = 0; i < jsonData["users"].Count; i++)
             //  {
-            //     currentUsers.Add(new User(jsonData["users"][i]["userName"].ToString()));
+            //    currentUsers.Add(jsonData["users"][i]["userName"].ToString()));
             // }
             // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
-            //} else {
         }
         else if (StreamerExist == false)
         {
+
+            Debug.Log("streamer doesn't exists");
             foreach (var user in chatUsers)
-            {   
-                int i = 0;    
-                GetUserData(user.UserName,i);
-                i++;
+            {
+                GetUserData(user.UserName);
             }
 
             StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
-
+            StartCoroutine(WriteNewPlayersToDB(JsonConvert.SerializeObject(currentPlayers)));
 
             // if file doesn't exsist go ahead and write current users
-            //StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers)));
+            //WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers));
             // }
         }
 
     }
     IEnumerator WriteNewUsersToDB(string json)
     {
-        var func = functions.GetHttpsCallable("AddNewPlayersToStreamer");
+        var func = functions.GetHttpsCallable("AddNewUsers");
         var data = new Dictionary<string, object>();
         data["dataFromUnity"] = json;
 
@@ -241,27 +278,31 @@ public class TwitchChatController : MonoBehaviour
         });
         yield return new WaitUntil(() => task.IsCompleted);
     }
-    // IEnumerator WriteNewUsersToDB(String data)
-    // {
+    IEnumerator WriteNewPlayersToDB(string json)
+    {
+        var func = functions.GetHttpsCallable("AddNewPlayers");
+        var data = new Dictionary<string, object>();
+        data["dataFromUnity"] = json;
+        data["platform"] = platform;
+        data["channel"] = channelName;
 
-    //     string url = "https://us-central1-tough-ivy-251300.cloudfunctions.net/AddNewPlayersToStreamer/?data=";
-    //     Debug.Log("start writing......");
-    //     // List<IMultipartFormSection> wwwForm = new List<IMultipartFormSection>();
-    //     // wwwForm.Add(new MultipartFormDataSection("data",data));
-    //     UnityWebRequest www = UnityWebRequest.Get(url);
-    //     yield return www.SendWebRequest();
-    //     if (www.isNetworkError || www.isHttpError)
-    //     {
-    //         Debug.LogError(www.error);
-    //     }
-    //     else
-    //     {
-    //         Debug.Log(www.downloadHandler.text);
-    //     }
-    //     Debug.Log("done writing");
 
-    // }
+        var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
+        {
+            if (callTask.IsFaulted)
+            {
+                // The function unexpectedly failed.
+                Debug.Log("FAILED!");
+                Debug.Log(String.Format("  Error: {0}", callTask.Exception));
+                return;
+            }
 
+            // The function succeeded.
+            var result = (IDictionary)callTask.Result.Data;
+            Debug.Log(String.Format("Results {0}", result["fuctionran"]));
+        });
+        yield return new WaitUntil(() => task.IsCompleted);
+    }
     void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
     {
         //Twitch Command
@@ -284,11 +325,62 @@ public class TwitchChatController : MonoBehaviour
 
     }
 
-    public void GetUserData(string userName,int i)
+
+    public void GetChannelData()
+    {
+
+        string data;
+        try
+        {
+
+            string userDataRequest = string.Format(string.Format("https://api.twitch.tv/helix/users?login={0}", channelName));
+            WebRequest requestObject = WebRequest.Create(userDataRequest);
+            requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
+            requestObject.Headers.Add("Bearer", Secrets.Access_token);
+            HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
+            using (Stream stream = responseObject.GetResponseStream())
+            {
+                StreamReader sr = new StreamReader(stream);
+                string CNdata = sr.ReadToEnd();
+                UserInfo id = JsonConvert.DeserializeObject<UserInfo>(CNdata);
+                channelID = id.Data[0].Id;
+                sr.Close();
+            }
+        }
+        catch
+        {
+
+        }
+
+        try
+        {
+            string channelDataRequest = string.Format("https://api.twitch.tv/kraken/channels/{0}", channelID);
+            WebRequest requestObject2 = WebRequest.Create(channelDataRequest);
+            requestObject2.Headers.Add("Client-ID", Secrets.Client_ID);
+            requestObject2.Headers.Add("OAuth", Secrets.OAuth);
+            HttpWebResponse responseObject2 = (HttpWebResponse)requestObject2.GetResponse();
+            using (Stream stream = responseObject2.GetResponseStream())
+            {
+                StreamReader sr = new StreamReader(stream);
+                data = sr.ReadToEnd();
+                sr.Close();
+            }
+            channelData = data;
+        }
+        catch
+        {
+
+        }
+
+
+    }
+    public void GetUserData(string userName)
     {
         string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userName);
         WebRequest requestObject = WebRequest.Create(userDataRequest);
         requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
+        requestObject.Headers.Add("Bearer", Secrets.Access_token);
+        requestObject.Headers.Add("OAuth", Secrets.OAuth);
         HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
         using (Stream stream = responseObject.GetResponseStream())
         {
@@ -297,7 +389,8 @@ public class TwitchChatController : MonoBehaviour
             sr.Close();
             UserInfo data = JsonConvert.DeserializeObject<UserInfo>(responseJSON);
             //Debug.Log(data.Data[i].Id);
-            newUsers.Add(new User(data.Data[i].Id,data.Data[i].Display_name,data.Data[i].Login,data.Data[i].Profile_image_url,channelName));
+            newUsers.Add(new User(data.Data[0].Id, data.Data[0].Display_name, data.Data[0].Login, data.Data[0].Profile_image_url, channelName));
+            currentPlayers.Add(new Player(data.Data[0].Id, data.Data[0].Display_name, data.Data[0].Login, platform, channelName));
         }
     }
 

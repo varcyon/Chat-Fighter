@@ -20,23 +20,67 @@ exports.getTwitchStreamers = functions.https.onRequest(async (request, response)
         response.status(500).send(error)
     }
 })
-exports.doesStreamerExist = functions.https.onRequest(async (request, response) => {
-    const channel = request.query.channel
-    const platform = request.query.platform
+exports.doesChannelExist = functions.https.onCall(async (data) => {
+    const db = admin.firestore()
+    const channel = data.channel
+    const platform = data.platform
+    const channelData = JSON.parse(data.channelData)
+    console.log(channelData)
     try {
-        const data = await admin.firestore().collection(`${platform}Streamers`).doc(`${channel}`).get()
-        if (!data.exists) {
-            response.send("0")
+        const DBdata = await admin.firestore().collection(`${platform}Streamers`).doc(`${channel}`).get()
+        if (DBdata.exists) {
+
+            return {
+                streamerExists: "1"
+            }
         } else {
-            response.send("1")
+            const setDoc = db.collection(`${platform}Streamers`).doc(`${channel}`).set(channelData)
+            console.log(setDoc)
+            return {
+                streamerExists: "0"
+            }
         }
     } catch (error) {
         console.log(error)
-        response.status(500).send(error)
+    }
+    return {
+        fuctionran: "the fuction ran"
     }
 })
 
-exports.AddNewPlayersToStreamer = functions.https.onCall(async (data) => {
+
+
+
+
+exports.QueryChannelsCurrentPlayers = functions.https.onCall(async (data) => {
+    //const db = admin.firestore()
+    //const channel = data.channel
+    //const platform = data.platform
+
+    try {
+
+        //const playersExist = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").get()
+
+    
+        // console.log(user.Id)
+        // console.log(user.DisplayName)
+        // console.log(user.UserName)
+        // console.log(user.ProfileUrl)
+        // console.log(user.Fighters)d
+
+    } catch (error) {
+        console.log(error)
+    }
+    return {
+        fuctionran: "the fuction ran"
+    }
+})
+
+
+
+
+
+exports.AddNewUsers = functions.https.onCall(async (data) => {
     const db = admin.firestore()
     const jsonObj = JSON.parse(data.dataFromUnity)
     //check if user already exists
@@ -50,8 +94,8 @@ exports.AddNewPlayersToStreamer = functions.https.onCall(async (data) => {
             const userExist = await db.collection("Users").doc(`${user.UserName}`).get()
             if (!userExist.exists) {
                 console.log("doesn't exist")
-                 const setDoc = await db.collection("Users").doc(`${user.UserName}`).set(user)
-                    console.log(setDoc) 
+                const setDoc = await db.collection("Users").doc(`${user.UserName}`).set(user)
+                console.log(setDoc)
             } else {
                 console.log("does exists")
             }
@@ -73,7 +117,43 @@ exports.AddNewPlayersToStreamer = functions.https.onCall(async (data) => {
 
 
 
+exports.AddNewPlayers = functions.https.onCall(async (data) => {
+    const db = admin.firestore()
+    const channel = data.channel
+    const platform = data.platform
 
+    const jsonObj = JSON.parse(data.dataFromUnity)
+    //check if user already exists
+    //////if does exist, check if they exist on streamers player list
+    ////////if they do.. do nothing
+    //////if they do not exist on streamers player list just add to the Fighters array
+    //
+    //if not,add user to Users
+    try {
+        jsonObj.forEach(async player => {
+            const userExist = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).get();
+            if (!userExist.exists) {
+                console.log("doesn't exist")
+                const setDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).set(player)
+                console.log(setDoc)
+            } else {
+                console.log("does exists")
+            }
+            // console.log(user.Id)
+            // console.log(user.DisplayName)
+            // console.log(user.UserName)
+            // console.log(user.ProfileUrl)
+            // console.log(user.Fighters)d
+
+        }
+        )
+    } catch (error) {
+        console.log(error)
+    }
+    return {
+        fuctionran: "the fuction ran"
+    }
+})
 
 // Add a new document in collection "cities" with ID 'LA'
 // let setDoc = db.collection('cities').doc('LA').set(data);
