@@ -20,6 +20,11 @@ exports.getTwitchStreamers = functions.https.onRequest(async (request, response)
         response.status(500).send(error)
     }
 })
+
+
+
+
+
 exports.doesChannelExist = functions.https.onCall(async (data) => {
     const db = admin.firestore()
     const channel = data.channel
@@ -28,23 +33,24 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
     console.log(channelData)
     try {
         const DBdata = await admin.firestore().collection(`${platform}Streamers`).doc(`${channel}`).get()
-        if (DBdata.exists) {
-
-            return {
-                streamerExists: "1"
-            }
-        } else {
+        if (!DBdata.exists) {
             const setDoc = db.collection(`${platform}Streamers`).doc(`${channel}`).set(channelData)
+            console.log("doc doesn't exists")
             console.log(setDoc)
             return {
-                streamerExists: "0"
+                streamerExists: "noStreamer"
+            }
+        } else {
+            console.log("doc exists")
+            return {
+                streamerExists: "streamer"
             }
         }
     } catch (error) {
         console.log(error)
     }
     return {
-        fuctionran: "the fuction ran"
+        fuctionran: "Does channel Exist has run"
     }
 })
 
@@ -53,28 +59,29 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
 
 
 exports.QueryChannelsCurrentPlayers = functions.https.onCall(async (data) => {
-    //const db = admin.firestore()
-    //const channel = data.channel
-    //const platform = data.platform
-
+    const db = admin.firestore()
+    const channel = data.channel
+    const platform = data.platform
+    let playersToUnity= new Array
     try {
 
-        //const playersExist = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").get()
-
-    
-        // console.log(user.Id)
-        // console.log(user.DisplayName)
-        // console.log(user.UserName)
-        // console.log(user.ProfileUrl)
-        // console.log(user.Fighters)d
-
+        const players = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").get()
+        console.log(players)
+        players.forEach(async player => {
+                //    console.log(player.id, '=>', player.data())
+                playersToUnity.push(player.data())
+                
+        })
+        console.log(playersToUnity)
     } catch (error) {
         console.log(error)
     }
     return {
-        fuctionran: "the fuction ran"
+        playersFromDB: playersToUnity
     }
+
 })
+
 
 
 
@@ -111,7 +118,7 @@ exports.AddNewUsers = functions.https.onCall(async (data) => {
         console.log(error)
     }
     return {
-        fuctionran: "the fuction ran"
+        fuctionran: "Add new Users has run."
     }
 })
 
@@ -151,7 +158,7 @@ exports.AddNewPlayers = functions.https.onCall(async (data) => {
         console.log(error)
     }
     return {
-        fuctionran: "the fuction ran"
+        fuctionran: "Add new players has run."
     }
 })
 
