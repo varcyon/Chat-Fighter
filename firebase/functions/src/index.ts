@@ -73,6 +73,7 @@ exports.QueryChannelsCurrentPlayers = functions.https.onCall(async (data) => {
                 
         })
         console.log(playersToUnity)
+        
     } catch (error) {
         console.log(error)
     }

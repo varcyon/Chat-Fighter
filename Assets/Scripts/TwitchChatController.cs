@@ -30,7 +30,7 @@ public class TwitchChatController : MonoBehaviour
 {
     DependencyStatus dependencyStatus = DependencyStatus.UnavailableOther;
     FirebaseFunctions functions;
-    const String platform = "Twitch";
+    string platform = "Twitch";
     public string channelName;
 
     public static TwitchChatController instance;
@@ -55,6 +55,8 @@ public class TwitchChatController : MonoBehaviour
     bool StreamerExist;
     public string channelData;
     public string channelID;
+    string playersFromDB;
+    dynamic DeserializedFromPlayersDB;
 
     void MakeSingleton()
     {
@@ -170,7 +172,6 @@ public class TwitchChatController : MonoBehaviour
         data["platform"] = platform;
         data["channel"] = channelName;
         data["channelData"] = channelData;
-        Debug.Log(StreamerExist);
         var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
                {
                    if (callTask.IsFaulted)
@@ -181,28 +182,21 @@ public class TwitchChatController : MonoBehaviour
                        return;
                    }
                    // The function succeeded.
-                   Debug.Log("before the results are called");
                    var result = (IDictionary)callTask.Result.Data;
-                   Debug.Log(result);
-                   Debug.Log(String.Format("Results {0}", result["streamerExists"].ToString()));
-                   Debug.Log(StreamerExist);
                    if (result["streamerExists"].ToString() == "streamer")
                    {
                        StreamerExist = true;
-                       Debug.Log(StreamerExist);
-                       Debug.Log("Streamer Exists");
                    }
                    else if (result["streamerExists"].ToString() == "noStreamer")
                    {
-                       Debug.Log(StreamerExist);
                        StreamerExist = false;
-                       Debug.Log("Streamer doesn't Exists");
                    }
                });
         yield return new WaitUntil(() => task.IsCompleted);
     }
     public IEnumerator QueryChannelsCurrentPlayers()
     {
+
         var func = functions.GetHttpsCallable("QueryChannelsCurrentPlayers");
         var data = new Dictionary<string, object>();
         data["platform"] = platform;
@@ -220,8 +214,13 @@ public class TwitchChatController : MonoBehaviour
 
             // The function succeeded.
             var result = (IDictionary)callTask.Result.Data;
-            string playersFromDB = JsonConvert.SerializeObject(result["playersFromDB"]);
+            playersFromDB = JsonConvert.SerializeObject(result["playersFromDB"]);
+            playersFromDB = playersFromDB.Replace("[{", @"{""Players"": [{");
+            playersFromDB = playersFromDB.Replace("}]", "}]}");
             Debug.Log(playersFromDB);
+            DeserializedFromPlayersDB = JsonConvert.DeserializeObject(playersFromDB);
+            Debug.Log(DeserializedFromPlayersDB);
+
 
         });
         yield return new WaitUntil(() => task.IsCompleted);
@@ -234,10 +233,32 @@ public class TwitchChatController : MonoBehaviour
         yield return StartCoroutine(DoesChannelExist());
         if (StreamerExist == true)
         {
-            Debug.Log("streamer exists");
+            Debug.Log("streamer exist ");
+            yield return StartCoroutine(QueryChannelsCurrentPlayers());
 
-            StartCoroutine(QueryChannelsCurrentPlayers());
-            //pull players from streamer doc
+            foreach (var item in DeserializedFromPlayersDB["Players"])
+            {
+                int expp = (int)item["Exp"];
+                currentPlayers.Add(new Player(item["Id"], item["DisplayName"], item["UserName"], item["Platform"], item["Channel"],expp,
+                 item["Coin"].ToObject<int>(), item["Level"].ToObject<int>(), item["Hp"].ToObject<int>(), item["Power"].ToObject<int>(), item["Dodge"].ToObject<int>(), item["Armor"].ToObject<int>(), item["Weight"].ToObject<int>(), item["Speed"].ToObject<int>(),item["Items"].ToObject<int>()));
+
+
+                // Debug.Log("ID:" + item["Id"]);
+                // Debug.Log("DisplayName:" + item["DisplayName"]);
+                // Debug.Log("UserName:" + item["UserName"]);
+                // Debug.Log("Platform:" + item["Platform"]);
+                // Debug.Log("Channel:" + item["Channel"]);
+                //Debug.Log("Exp:" + item["Exp"]);
+                // Debug.Log("Coin:" + item["Coin"]);
+                // Debug.Log("Level:" + item["Level"]);
+                // Debug.Log("HP:" + item["Hp"]);
+                // Debug.Log("Power:" + item["Power"]);
+                // Debug.Log("Dodge:" + item["Dodge"]);
+                // Debug.Log("Armor:" + item["Armor"]);
+                // Debug.Log("Weight:" + item["Weight"]);
+                // Debug.Log("Speed:" + item["Speed"]);
+                // Debug.Log("Items:" + item["Items"]);
+            }
             //  for(int i = 0; i < jsonData["users"].Count; i++)
             //  {
             //    currentUsers.Add(jsonData["users"][i]["userName"].ToString()));
@@ -246,16 +267,10 @@ public class TwitchChatController : MonoBehaviour
         }
         else if (StreamerExist == false)
         {
-            int i = 0;
-            Debug.Log("streamer doesn't exists");
             foreach (var user in chatUsers)
             {
                 GetUserData(user.UserName);
-                Debug.Log("getting user data");
-                Debug.Log(i);
-                i++;
             }
-            Debug.Log("finished getting users.");
             StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
             StartCoroutine(WriteNewPlayersToDB(JsonConvert.SerializeObject(currentPlayers)));
 
@@ -283,7 +298,6 @@ public class TwitchChatController : MonoBehaviour
 
             // The function succeeded.
             var result = (IDictionary)callTask.Result.Data;
-            Debug.Log(String.Format("Results {0}", result["fuctionran"]));
         });
         yield return new WaitUntil(() => task.IsCompleted);
     }
@@ -308,7 +322,6 @@ public class TwitchChatController : MonoBehaviour
 
             // The function succeeded.
             var result = (IDictionary)callTask.Result.Data;
-            Debug.Log(String.Format("Results {0}", result["fuctionran"]));
         });
         yield return new WaitUntil(() => task.IsCompleted);
     }
@@ -349,7 +362,6 @@ public class TwitchChatController : MonoBehaviour
             channelID = id.Data[0].Id;
             sr.Close();
         }
-        Debug.Log("getting channel ID has run");
         return channelID;
     }
 
@@ -367,16 +379,13 @@ public class TwitchChatController : MonoBehaviour
             data = sr.ReadToEnd();
             sr.Close();
         }
-        Debug.Log("getting channel DATA has run");
         return data;
     }
 
     IEnumerator GetChannelData()
     {
         yield return channelID = GetChannelID();
-        Debug.Log(channelID);
         yield return channelData = GetChannelJson();
-        Debug.Log(channelData);
     }
 
 
