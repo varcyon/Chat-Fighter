@@ -56,7 +56,6 @@ public class TwitchChatController : MonoBehaviour
     public string channelData;
     public string channelID;
     string playersFromDB;
-    dynamic DeserializedFromPlayersDB;
 
     void MakeSingleton()
     {
@@ -215,12 +214,7 @@ public class TwitchChatController : MonoBehaviour
             // The function succeeded.
             var result = (IDictionary)callTask.Result.Data;
             playersFromDB = JsonConvert.SerializeObject(result["playersFromDB"]);
-            playersFromDB = playersFromDB.Replace("[{", @"{""Players"": [{");
-            playersFromDB = playersFromDB.Replace("}]", "}]}");
-            Debug.Log(playersFromDB);
-            DeserializedFromPlayersDB = JsonConvert.DeserializeObject(playersFromDB);
-            Debug.Log(DeserializedFromPlayersDB);
-
+            // Debug.Log(DeserializedFromPlayersDB);
 
         });
         yield return new WaitUntil(() => task.IsCompleted);
@@ -235,30 +229,11 @@ public class TwitchChatController : MonoBehaviour
         {
             Debug.Log("streamer exist ");
             yield return StartCoroutine(QueryChannelsCurrentPlayers());
-
-            foreach (var item in DeserializedFromPlayersDB["Players"])
-            {
-                int expp = (int)item["Exp"];
-                currentPlayers.Add(new Player(item["Id"], item["DisplayName"], item["UserName"], item["Platform"], item["Channel"],expp,
-                 item["Coin"].ToObject<int>(), item["Level"].ToObject<int>(), item["Hp"].ToObject<int>(), item["Power"].ToObject<int>(), item["Dodge"].ToObject<int>(), item["Armor"].ToObject<int>(), item["Weight"].ToObject<int>(), item["Speed"].ToObject<int>(),item["Items"].ToObject<int>()));
-
-
-                // Debug.Log("ID:" + item["Id"]);
-                // Debug.Log("DisplayName:" + item["DisplayName"]);
-                // Debug.Log("UserName:" + item["UserName"]);
-                // Debug.Log("Platform:" + item["Platform"]);
-                // Debug.Log("Channel:" + item["Channel"]);
-                //Debug.Log("Exp:" + item["Exp"]);
-                // Debug.Log("Coin:" + item["Coin"]);
-                // Debug.Log("Level:" + item["Level"]);
-                // Debug.Log("HP:" + item["Hp"]);
-                // Debug.Log("Power:" + item["Power"]);
-                // Debug.Log("Dodge:" + item["Dodge"]);
-                // Debug.Log("Armor:" + item["Armor"]);
-                // Debug.Log("Weight:" + item["Weight"]);
-                // Debug.Log("Speed:" + item["Speed"]);
-                // Debug.Log("Items:" + item["Items"]);
-            }
+            Debug.Log(playersFromDB);
+            currentPlayers = JsonConvert.DeserializeObject<List<Player>>(playersFromDB);
+            Debug.Log("finished Deserialization");
+            Debug.Log(currentPlayers.Count());
+            // }
             //  for(int i = 0; i < jsonData["users"].Count; i++)
             //  {
             //    currentUsers.Add(jsonData["users"][i]["userName"].ToString()));
@@ -454,3 +429,30 @@ public class TwitchChatController : MonoBehaviour
 
 
 }
+
+
+            // playersFromDB = playersFromDB.Replace("[{", @"{""Players"": [{");
+            // playersFromDB = playersFromDB.Replace("}]", "}]}");
+
+            // foreach (var item in DeserializedFromPlayersDB["Players"])
+            // {
+            //     int expp = (int)item["Exp"];
+            //     currentPlayers.Add(new Player(item["Id"], item["DisplayName"], item["UserName"], item["Platform"], item["Channel"],expp,
+            //      item["Coin"].ToObject<int>(), item["Level"].ToObject<int>(), item["Hp"].ToObject<int>(), item["Power"].ToObject<int>(), item["Dodge"].ToObject<int>(), item["Armor"].ToObject<int>(), item["Weight"].ToObject<int>(), item["Speed"].ToObject<int>(),item["Items"].ToObject<int>()));
+
+
+            //     // Debug.Log("ID:" + item["Id"]);
+            //     // Debug.Log("DisplayName:" + item["DisplayName"]);
+            //     // Debug.Log("UserName:" + item["UserName"]);
+            //     // Debug.Log("Platform:" + item["Platform"]);
+            //     // Debug.Log("Channel:" + item["Channel"]);
+            //     //Debug.Log("Exp:" + item["Exp"]);
+            //     // Debug.Log("Coin:" + item["Coin"]);
+            //     // Debug.Log("Level:" + item["Level"]);
+            //     // Debug.Log("HP:" + item["Hp"]);
+            //     // Debug.Log("Power:" + item["Power"]);
+            //     // Debug.Log("Dodge:" + item["Dodge"]);
+            //     // Debug.Log("Armor:" + item["Armor"]);
+            //     // Debug.Log("Weight:" + item["Weight"]);
+            //     // Debug.Log("Speed:" + item["Speed"]);
+            //     // Debug.Log("Items:" + item["Items"]);
