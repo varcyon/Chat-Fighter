@@ -13,20 +13,6 @@ public class User
     public string ProfileUrl;
     public List<string> Fighters = new List<string>();
 
-
-    public User(string userName)
-    {
-        this.UserName = userName;
-    }
-
-    public User(string id, string displayName, string login, string profileUrl, string channelName)
-    {
-        this.Id = id;
-        this.DisplayName = displayName;
-        this.UserName = login;
-        this.ProfileUrl = profileUrl;
-        this.Fighters.Add(channelName);
-    }
 }
 
 

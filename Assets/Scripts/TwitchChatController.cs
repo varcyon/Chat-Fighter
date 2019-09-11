@@ -20,6 +20,7 @@ using UnityEngine.Networking;
 using Firebase.Functions;
 using Firebase.Extensions;
 using Firebase;
+using TwitchLib.Api.Models.Undocumented.Chatters;
 
 // getting and using the data from
 // the database
@@ -46,17 +47,16 @@ public class TwitchChatController : MonoBehaviour
     public Text chatBox;
 
     //lists for getting twitch chat users
-    public List<User> currentUsers = new List<User>();
     public List<User> chatUsers = new List<User>();
 
     public List<User> newUsers = new List<User>();
     public List<UserInfo> userInfo = new List<UserInfo>();
-    public List<Player> currentPlayers = new List<Player>();
+    public List<Player> dataBasePlayers = new List<Player>();
     bool StreamerExist;
     public string channelData;
     public string channelID;
     string playersFromDB;
-
+    public Api api;
     void MakeSingleton()
     {
         if (instance != null)
@@ -79,9 +79,30 @@ public class TwitchChatController : MonoBehaviour
         Debug.Log("Starting....");
         checkFirebaseDepen();
         Connect();
+        api = new Api();
+        api.Settings.AccessToken = Secrets.Access_token;
+        api.Settings.ClientId = Secrets.Client_ID;
         client.OnMessageReceived += OnMessageReceived;
-        Debug.Log("streamer check complete");
-        Debug.Log(StreamerExist);
+
+        client.OnUserJoined += OnUserJoined;
+        client.OnUserLeft += OnUserLeft;
+    }
+    void Connect()
+    {
+        Application.runInBackground = true;
+        ConnectionCredentials credentials = new ConnectionCredentials(Secrets.botName, Secrets.Access_token);
+        client = new Client();
+        client.Initialize(credentials, channelName);
+        client.Connect();
+    }
+    private void OnUserLeft(object sender, OnUserLeftArgs e)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void OnUserJoined(object sender, OnUserJoinedArgs e)
+    {
+
     }
 
     private void OnMessageReceived(object sender, OnMessageReceivedArgs e)
@@ -95,16 +116,23 @@ public class TwitchChatController : MonoBehaviour
     {
         client.SendMessage(client.JoinedChannels[0], message);
     }
-    void Connect()
-    {
-        Application.runInBackground = true;
-        ConnectionCredentials credentials = new ConnectionCredentials(Secrets.botName, Secrets.Access_token);
-        client = new Client();
-        client.Initialize(credentials, channelName);
-        client.Connect();
-    }
+
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            // api.Invoke(
+            //     api.Undocumented.GetChattersAsync(client.JoinedChannels[0].Channel), GetChatterListCallback);
+        }
+    }
+
+    private void GetChatterListCallback(List<ChatterFormatted> listOfChatters)
+    {
+        Debug.Log("List of " + listOfChatters.Count + "Viewers: ");
+        foreach (var chatterObject in listOfChatters)
+        {
+            chatUsers.Add(new User() { UserName = chatterObject.Username });
+        }
     }
 
     public void TryGettingChatters()
@@ -112,56 +140,56 @@ public class TwitchChatController : MonoBehaviour
         chatUsers = new List<User>();
         newUsers = new List<User>();
         userInfo = new List<UserInfo>();
-
-        dynamic data;
-        string chattersRequest = string.Format("http://tmi.twitch.tv/group/user/{0}/chatters", channelName);
-        WebRequest requestObject = WebRequest.Create(chattersRequest);
-        // requestObject.Headers.Add("Authorization", "Basic ashAHasd87asdHasdas");
-        HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
-        using (Stream stream = responseObject.GetResponseStream())
-        {
-            StreamReader sr = new StreamReader(stream);
-            string responseJSON = sr.ReadToEnd();
-            sr.Close();
-            data = JsonConvert.DeserializeObject(responseJSON);
-            Debug.Log(data);
-        }
-        AddChatUsersToList(data);
-
-    }
-    public void AddChatUsersToList(dynamic data)
-    {
-        foreach (var item in data["chatters"]["broadcaster"])
-        {
-            chatUsers.Add(new User(item.ToString()));
-        }
-        foreach (var item in data["chatters"]["moderators"])
-        {
-            chatUsers.Add(new User(item.ToString()));
-        }
-        foreach (var item in data["chatters"]["viewers"])
-        {
-            chatUsers.Add(new User(item.ToString()));
-        }
-        foreach (var item in data["chatters"]["staff"])
-        {
-            chatUsers.Add(new User(item.ToString()));
-        }
-        foreach (var item in data["chatters"]["admins"])
-        {
-            chatUsers.Add(new User(item.ToString()));
-        }
-        foreach (var item in data["chatters"]["global_mods"])
-        {
-            chatUsers.Add(new User(item.ToString()));
-        }
-        foreach (var item in data["chatters"]["vips"])
-        {
-            chatUsers.Add(new User(item.ToString()));
-        }
-        Debug.Log(JsonConvert.SerializeObject(chatUsers));
+        api.Invoke(api.Undocumented.GetChattersAsync(client.JoinedChannels[0].Channel), GetChatterListCallback);
+        // dynamic data;
+        // string chattersRequest = string.Format("http://tmi.twitch.tv/group/user/{0}/chatters", channelName);
+        // WebRequest requestObject = WebRequest.Create(chattersRequest);
+        // // requestObject.Headers.Add("Authorization", "Basic ashAHasd87asdHasdas");
+        // HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
+        // using (Stream stream = responseObject.GetResponseStream())
+        // {
+        //     StreamReader sr = new StreamReader(stream);
+        //     string responseJSON = sr.ReadToEnd();
+        //     sr.Close();
+        //     data = JsonConvert.DeserializeObject(responseJSON);
+        //     Debug.Log(data);
+        // }
+        // AddChatUsersToList(data);
         StartCoroutine(CompareNewToCurrentUsers());
     }
+    // public void AddChatUsersToList(dynamic data)
+    // {
+    //     foreach (var item in data["chatters"]["broadcaster"])
+    //     {
+    //         chatUsers.Add(new User() { UserName = item.ToString() });
+    //     }
+    //     foreach (var item in data["chatters"]["moderators"])
+    //     {
+    //         chatUsers.Add(new User() { UserName = item.ToString() });
+    //     }
+    //     foreach (var item in data["chatters"]["viewers"])
+    //     {
+    //         chatUsers.Add(new User() { UserName = item.ToString() });
+    //     }
+    //     foreach (var item in data["chatters"]["staff"])
+    //     {
+    //         chatUsers.Add(new User() { UserName = item.ToString() });
+    //     }
+    //     foreach (var item in data["chatters"]["admins"])
+    //     {
+    //         chatUsers.Add(new User() { UserName = item.ToString() });
+    //     }
+    //     foreach (var item in data["chatters"]["global_mods"])
+    //     {
+    //         chatUsers.Add(new User() { UserName = item.ToString() });
+    //     }
+    //     foreach (var item in data["chatters"]["vips"])
+    //     {
+    //         chatUsers.Add(new User() { UserName = item.ToString() });
+    //     }
+    //     Debug.Log(JsonConvert.SerializeObject(chatUsers));
+
+    // }
 
     IEnumerator DoesChannelExist()
     {
@@ -200,7 +228,6 @@ public class TwitchChatController : MonoBehaviour
         var data = new Dictionary<string, object>();
         data["platform"] = platform;
         data["channel"] = channelName;
-
         var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
         {
             if (callTask.IsFaulted)
@@ -230,36 +257,39 @@ public class TwitchChatController : MonoBehaviour
             Debug.Log("streamer exist ");
             yield return StartCoroutine(QueryChannelsCurrentPlayers());
             Debug.Log(playersFromDB);
-            currentPlayers = JsonConvert.DeserializeObject<List<Player>>(playersFromDB);
+            dataBasePlayers = JsonConvert.DeserializeObject<List<Player>>(playersFromDB);
             Debug.Log("finished Deserialization");
-            Debug.Log(currentPlayers.Count());
-            // }
-            //  for(int i = 0; i < jsonData["users"].Count; i++)
-            //  {
-            //    currentUsers.Add(jsonData["users"][i]["userName"].ToString()));
-            // }
-            // newUsers = chatUsers.Where(x => !currentUsers.Any(y => y.UserName == x.UserName)).ToList();
+
+            newUsers = chatUsers.Where(x => !dataBasePlayers.Any(y => y.UserName == x.UserName)).ToList();
+
+            //get new user infos
+
+            // write to players
+            StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
+
         }
         else if (StreamerExist == false)
         {
+            Debug.Log("streamer doesn't exist ");
+
             foreach (var user in chatUsers)
             {
                 GetUserData(user.UserName);
+                // yield return new WaitForSeconds(0.5f);
             }
-            StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
-            StartCoroutine(WriteNewPlayersToDB(JsonConvert.SerializeObject(currentPlayers)));
+            yield return StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
+            yield return StartCoroutine(WriteNewPlayersToDB(JsonConvert.SerializeObject(dataBasePlayers)));
 
-            // if file doesn't exsist go ahead and write current users
-            //WriteNewUsersToDB(JsonConvert.SerializeObject(chatUsers));
-            // }
+
         }
-
+        Debug.Log("DONE!");
     }
     IEnumerator WriteNewUsersToDB(string json)
     {
         var func = functions.GetHttpsCallable("AddNewUsers");
         var data = new Dictionary<string, object>();
         data["dataFromUnity"] = json;
+        data["channel"] = channelName;
 
         var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
         {
@@ -327,7 +357,8 @@ public class TwitchChatController : MonoBehaviour
         string userDataRequest = string.Format(string.Format("https://api.twitch.tv/helix/users?login={0}", channelName));
         WebRequest requestObject = WebRequest.Create(userDataRequest);
         requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
-        requestObject.Headers.Add("Bearer", Secrets.Access_token);
+        requestObject.Headers.Add("Authorization: Bearer " + Secrets.Access_token);
+
         HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
         using (Stream stream = responseObject.GetResponseStream())
         {
@@ -345,8 +376,10 @@ public class TwitchChatController : MonoBehaviour
         string data;
         string channelDataRequest = string.Format("https://api.twitch.tv/kraken/channels/{0}", channelID);
         WebRequest requestObject2 = WebRequest.Create(channelDataRequest);
+        requestObject2.PreAuthenticate = true;
         requestObject2.Headers.Add("Client-ID", Secrets.Client_ID);
-        requestObject2.Headers.Add("OAuth", Secrets.OAuth);
+        requestObject2.Headers.Add("Authorizatio: OAuth " + Secrets.OAuth);
+
         HttpWebResponse responseObject2 = (HttpWebResponse)requestObject2.GetResponse();
         using (Stream stream = responseObject2.GetResponseStream())
         {
@@ -369,9 +402,11 @@ public class TwitchChatController : MonoBehaviour
     {
         string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userName);
         WebRequest requestObject = WebRequest.Create(userDataRequest);
+        requestObject.PreAuthenticate = true;
         requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
-        requestObject.Headers.Add("Bearer", Secrets.Access_token);
-        requestObject.Headers.Add("OAuth", Secrets.OAuth);
+        requestObject.Headers.Add("Authorization: Bearer " + Secrets.Access_token);
+
+
         HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
         using (Stream stream = responseObject.GetResponseStream())
         {
@@ -380,8 +415,24 @@ public class TwitchChatController : MonoBehaviour
             sr.Close();
             UserInfo data = JsonConvert.DeserializeObject<UserInfo>(responseJSON);
             //Debug.Log(data.Data[i].Id);
-            newUsers.Add(new User(data.Data[0].Id, data.Data[0].Display_name, data.Data[0].Login, data.Data[0].Profile_image_url, channelName));
-            currentPlayers.Add(new Player(data.Data[0].Id, data.Data[0].Display_name, data.Data[0].Login, platform, channelName));
+            User newUser = new User()
+            {
+                Id = data.Data[0].Id,
+                DisplayName = data.Data[0].Display_name,
+                UserName = data.Data[0].Login,
+                ProfileUrl = data.Data[0].Profile_image_url
+            };
+            newUser.Fighters.Add(channelName);
+            newUsers.Add(newUser);
+
+            dataBasePlayers.Add(new Player()
+            {
+                Id = data.Data[0].Id,
+                DisplayName = data.Data[0].Display_name,
+                UserName = data.Data[0].Login,
+                Platform = platform,
+                Channel = channelName
+            });
         }
     }
 
@@ -431,28 +482,28 @@ public class TwitchChatController : MonoBehaviour
 }
 
 
-            // playersFromDB = playersFromDB.Replace("[{", @"{""Players"": [{");
-            // playersFromDB = playersFromDB.Replace("}]", "}]}");
+// playersFromDB = playersFromDB.Replace("[{", @"{""Players"": [{");
+// playersFromDB = playersFromDB.Replace("}]", "}]}");
 
-            // foreach (var item in DeserializedFromPlayersDB["Players"])
-            // {
-            //     int expp = (int)item["Exp"];
-            //     currentPlayers.Add(new Player(item["Id"], item["DisplayName"], item["UserName"], item["Platform"], item["Channel"],expp,
-            //      item["Coin"].ToObject<int>(), item["Level"].ToObject<int>(), item["Hp"].ToObject<int>(), item["Power"].ToObject<int>(), item["Dodge"].ToObject<int>(), item["Armor"].ToObject<int>(), item["Weight"].ToObject<int>(), item["Speed"].ToObject<int>(),item["Items"].ToObject<int>()));
+// foreach (var item in DeserializedFromPlayersDB["Players"])
+// {
+//     int expp = (int)item["Exp"];
+//     dataBasePlayers.Add(new Player(item["Id"], item["DisplayName"], item["UserName"], item["Platform"], item["Channel"],expp,
+//      item["Coin"].ToObject<int>(), item["Level"].ToObject<int>(), item["Hp"].ToObject<int>(), item["Power"].ToObject<int>(), item["Dodge"].ToObject<int>(), item["Armor"].ToObject<int>(), item["Weight"].ToObject<int>(), item["Speed"].ToObject<int>(),item["Items"].ToObject<int>()));
 
 
-            //     // Debug.Log("ID:" + item["Id"]);
-            //     // Debug.Log("DisplayName:" + item["DisplayName"]);
-            //     // Debug.Log("UserName:" + item["UserName"]);
-            //     // Debug.Log("Platform:" + item["Platform"]);
-            //     // Debug.Log("Channel:" + item["Channel"]);
-            //     //Debug.Log("Exp:" + item["Exp"]);
-            //     // Debug.Log("Coin:" + item["Coin"]);
-            //     // Debug.Log("Level:" + item["Level"]);
-            //     // Debug.Log("HP:" + item["Hp"]);
-            //     // Debug.Log("Power:" + item["Power"]);
-            //     // Debug.Log("Dodge:" + item["Dodge"]);
-            //     // Debug.Log("Armor:" + item["Armor"]);
-            //     // Debug.Log("Weight:" + item["Weight"]);
-            //     // Debug.Log("Speed:" + item["Speed"]);
-            //     // Debug.Log("Items:" + item["Items"]);
+//     // Debug.Log("ID:" + item["Id"]);
+//     // Debug.Log("DisplayName:" + item["DisplayName"]);
+//     // Debug.Log("UserName:" + item["UserName"]);
+//     // Debug.Log("Platform:" + item["Platform"]);
+//     // Debug.Log("Channel:" + item["Channel"]);
+//     //Debug.Log("Exp:" + item["Exp"]);
+//     // Debug.Log("Coin:" + item["Coin"]);
+//     // Debug.Log("Level:" + item["Level"]);
+//     // Debug.Log("HP:" + item["Hp"]);
+//     // Debug.Log("Power:" + item["Power"]);
+//     // Debug.Log("Dodge:" + item["Dodge"]);
+//     // Debug.Log("Armor:" + item["Armor"]);
+//     // Debug.Log("Weight:" + item["Weight"]);
+//     // Debug.Log("Speed:" + item["Speed"]);
+//     // Debug.Log("Items:" + item["Items"]);
