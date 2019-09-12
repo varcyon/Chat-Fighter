@@ -32,9 +32,7 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
     try {
         const DBdata = await admin.firestore().collection(`${platform}Streamers`).doc(`${channel}`).get()
         if (!DBdata.exists) {
-            const setDoc = db.collection(`${platform}Streamers`).doc(`${channel}`).set(channelData)
-            console.log("doc doesn't exists")
-            console.log(setDoc)
+            await db.collection(`${platform}Streamers`).doc(`${channel}`).set(channelData)
             return {
                 streamerExists: "noStreamer"
             }
@@ -52,7 +50,40 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
     }
 })
 
+exports.UserJoinedQuery = functions.https.onCall(async (data) => {
+    const db = admin.firestore()
+    const channel = data.channel
+    const platform = data.platform
+    const UserName = data.user
+    try {
+        const playerDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").where('UserName', '==', `${UserName}`).get()
+        if (!playerDoc.empty) {
+            //player exists
+            playerDoc.forEach(player => {
+                let data = player.data
+                data = data
+            })
 
+        } else {
+            const userDoc = await db.collection("Users").where('UserName', '==', `${UserName}`).get()
+            if (!userDoc.empty) {
+                return {
+                    results: "add Player and update users fighters"
+
+                }
+            } else {
+                return {
+                    results: "add User & Player"
+                }
+            }
+        }
+    } catch (error) {
+        console.log(error)
+    }
+    return {
+
+    }
+})
 
 
 
@@ -65,11 +96,8 @@ exports.QueryChannelsDBPlayers = functions.https.onCall(async (data) => {
         const players = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").get()
         console.log(players)
         players.forEach(async player => {
-            //    console.log(player.id, '=>', player.data())
             playersToUnity.push(player.data())
-
         })
-        console.log(playersToUnity)
     } catch (error) {
         console.log(error)
     }
@@ -87,20 +115,14 @@ exports.AddNewUsers = functions.https.onCall(async (data) => {
     const db = admin.firestore()
     const jsonObj = JSON.parse(data.dataFromUnity)
     const channel = data.channel
-    console.log(channel)
     try {
         jsonObj.forEach(async user => {
             const userExist = await db.collection("Users").doc(`${user.UserName}`).get()
             if (!userExist.exists) {
-                console.log("doesn't exist")
-                const setDoc = await db.collection("Users").doc(`${user.UserName}`).set(user)
-                console.log(setDoc)
+                await db.collection("Users").doc(`${user.UserName}`).set(user)
             } else {
-                console.log("does exists")
-                console.log(channel)
                 await db.collection("Users").doc(`${user.UserName}`).update({
                     Fighters: admin.firestore.FieldValue.arrayUnion(`${channel}`)
-                    
                 })
             }
         })
@@ -123,11 +145,11 @@ exports.AddNewPlayers = functions.https.onCall(async (data) => {
     const jsonObj = JSON.parse(data.dataFromUnity)
     try {
         jsonObj.forEach(async player => {
-            const userExist = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).get();
+            const userExist = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).get()
             if (!userExist.exists) {
                 console.log("doesn't exist")
-                const setDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).set(player)
-                console.log(setDoc)
+                let setDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).set(player)
+                setDoc = setDoc
             } else {
                 console.log("does exists")
             }

@@ -101,6 +101,8 @@ public class TwitchChatController : MonoBehaviour
 
     private void OnUserJoined(object sender, OnUserJoinedArgs e)
     {
+        UserJoined(e.Username);
+        
         //querry streamer player collection
         //if exists , add player to databasePlayers
         //else
@@ -111,6 +113,29 @@ public class TwitchChatController : MonoBehaviour
         //get user info and add them to user collection
     }
 
+    IEnumerator UserJoined(string userName)
+    {
+        var func = functions.GetHttpsCallable("UserJoinedQuery");
+        var data = new Dictionary<string, object>();
+        data["channel"] = channelName;
+        data["platform"] = platform;
+        data["user"] = userName;
+        var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
+               {
+                   if (callTask.IsFaulted)
+                   {
+                       // The function unexpectedly failed.
+                       Debug.Log("FAILED!");
+                       Debug.Log(String.Format("  Error: {0}", callTask.Exception));
+                       return;
+                   }
+                   // The function succeeded.
+                   var result = (IDictionary)callTask.Result.Data;
+                //result[" "];
+               });
+        yield return new WaitUntil(() => task.IsCompleted);
+    
+    }
 
     private void OnMessageReceived(object sender, OnMessageReceivedArgs e)
     {
