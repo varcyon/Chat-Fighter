@@ -56,7 +56,7 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
 
 
 
-exports.QueryChannelsCurrentPlayers = functions.https.onCall(async (data) => {
+exports.QueryChannelsDBPlayers = functions.https.onCall(async (data) => {
     const db = admin.firestore()
     const channel = data.channel
     const platform = data.platform
