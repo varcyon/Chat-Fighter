@@ -63,17 +63,19 @@ exports.UserJoinedQuery = functions.https.onCall(async (data) => {
                 let data = player.data
                 data = data
             })
-
+            return{
+                results: "data",
+                playerData: data
+            }
         } else {
             const userDoc = await db.collection("Users").where('UserName', '==', `${UserName}`).get()
             if (!userDoc.empty) {
                 return {
-                    results: "add Player and update users fighters"
-
+                    results: "1"//"add Player and update users fighters"
                 }
             } else {
                 return {
-                    results: "add User & Player"
+                    results: "2"//"add User & Player"
                 }
             }
         }
