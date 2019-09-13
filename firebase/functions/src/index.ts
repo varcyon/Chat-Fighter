@@ -56,17 +56,15 @@ exports.UserJoinedQuery = functions.https.onCall(async (data) => {
     const platform = data.platform
     const UserName = data.user
     try {
-        const playerDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").where('UserName', '==', `${UserName}`).get()
-        if (!playerDoc.empty) {
+        const playerDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${UserName}`).get()
+        if (!playerDoc.exists) {
             //player exists
-            playerDoc.forEach(player => {
-                let data = player.data
-                data = data
-            })
-            return{
-                results: "data",
-                playerData: data
-            }
+                const playerData = playerDoc.data
+                console.log(playerData)
+                return{
+                    results: "data",
+                    playerData: playerData
+                }
         } else {
             const userDoc = await db.collection("Users").where('UserName', '==', `${UserName}`).get()
             if (!userDoc.empty) {
@@ -83,7 +81,6 @@ exports.UserJoinedQuery = functions.https.onCall(async (data) => {
         console.log(error)
     }
     return {
-
     }
 })
 
@@ -93,7 +90,7 @@ exports.QueryChannelsDBPlayers = functions.https.onCall(async (data) => {
     const db = admin.firestore()
     const channel = data.channel
     const platform = data.platform
-    let playersToUnity = new Array
+    const playersToUnity = new Array
     try {
         const players = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").get()
         console.log(players)

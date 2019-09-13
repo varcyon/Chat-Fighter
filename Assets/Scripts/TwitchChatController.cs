@@ -101,8 +101,8 @@ public class TwitchChatController : MonoBehaviour
 
     private void OnUserJoined(object sender, OnUserJoinedArgs e)
     {
-        UserJoined(e.Username);
-        
+        StartCoroutine(UserJoined(e.Username));
+        Debug.Log("User: " + e.Username + " has Joined");
         //querry streamer player collection
         //if exists , add player to databasePlayers
         //else
@@ -115,6 +115,8 @@ public class TwitchChatController : MonoBehaviour
 
     IEnumerator UserJoined(string userName)
     {
+        newUsers = new List<User>();
+        newPlayers = new List<Player>();
         var func = functions.GetHttpsCallable("UserJoinedQuery");
         var data = new Dictionary<string, object>();
         data["channel"] = channelName;
@@ -131,12 +133,69 @@ public class TwitchChatController : MonoBehaviour
                    }
                    // The function succeeded.
                    var result = (IDictionary)callTask.Result.Data;
-                //result[" "];
+
+                   Debug.Log("Player doc, "+userName+" is empty ,result: " + result["results"]);
+                   if (result["results"].ToString() == "data")
+                   {
+                       Debug.Log("adding user joined , " + userName + " ,to database players");
+                       string json = JsonConvert.SerializeObject(result["playerData"]);
+                       Debug.Log(json);
+                      dataBasePlayers.Add(JsonConvert.DeserializeObject<Player>(json));
+                    //    dataBasePlayers.Add(new Player(){
+                    //        player.
+                    //    });
+                   }
+                   if (result["results"].ToString() == "1" || result["results"].ToString() == "2")
+                   {
+                       GetUserJoinedData(userName);
+                       newPlayers.Add(new Player()
+                       {
+                           Id = newUsers[0].Id,
+                           DisplayName = newUsers[0].DisplayName,
+                           UserName = newUsers[0].UserName,
+                           Platform = platform,
+                           Channel = channelName
+                       });
+                       StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
+                       StartCoroutine(WriteNewPlayersToDB(JsonConvert.SerializeObject(newPlayers)));
+                       dataBasePlayers.Add(new Player()
+                       {
+                           Id = newUsers[0].Id,
+                           DisplayName = newUsers[0].DisplayName,
+                           UserName = newUsers[0].UserName,
+                           Platform = platform,
+                           Channel = channelName
+                       });
+                   }
+
                });
         yield return new WaitUntil(() => task.IsCompleted);
-    
-    }
 
+
+    }
+    public void GetUserJoinedData(string userName)
+    {
+        string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userName);
+        WebRequest requestObject = WebRequest.Create(userDataRequest);
+        requestObject.PreAuthenticate = true;
+        requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
+        requestObject.Headers.Add("Authorization: Bearer " + Secrets.Access_token);
+        HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
+        using (Stream stream = responseObject.GetResponseStream())
+        {
+            StreamReader sr = new StreamReader(stream);
+            string responseJSON = sr.ReadToEnd();
+            sr.Close();
+            UserInfo data = JsonConvert.DeserializeObject<UserInfo>(responseJSON);
+            User newUser = new User()
+            {
+                Id = data.Data[0].Id,
+                DisplayName = data.Data[0].Display_name,
+                UserName = data.Data[0].Login,
+                ProfileUrl = data.Data[0].Profile_image_url
+            };
+        }
+    }
     private void OnMessageReceived(object sender, OnMessageReceivedArgs e)
     {
         string speaker = e.ChatMessage.DisplayName;
