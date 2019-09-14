@@ -7,8 +7,8 @@ using UnityEngine;
 
 public class User
 {
-    public string Id;
     public string DisplayName;
+    public string Id;
     public string UserName;
     public string ProfileUrl;
     public List<string> Fighters = new List<string>();

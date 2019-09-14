@@ -6,8 +6,8 @@ using UnityEngine;
 [Serializable]
 public class Player
 {
-    public string Id;
     public string DisplayName;
+    public string Id;
     public string UserName;
     public string Platform;
     public string Channel;

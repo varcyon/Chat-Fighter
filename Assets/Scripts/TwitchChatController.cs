@@ -50,7 +50,8 @@ public class TwitchChatController : MonoBehaviour
     public List<User> chatUsers = new List<User>();
 
     public List<User> newUsers = new List<User>();
-    public List<UserInfo> userInfo = new List<UserInfo>();
+    public List<Player> chatPlayers = new List<Player>();
+    List<UserInfo> userInfo = new List<UserInfo>();
     public List<Player> dataBasePlayers = new List<Player>();
     public List<Player> newPlayers = new List<Player>();
     bool StreamerExist;
@@ -58,6 +59,7 @@ public class TwitchChatController : MonoBehaviour
     public string channelID;
     string playersFromDB;
     public Api api;
+    public int coinsPerUpdate = 5;
     void MakeSingleton()
     {
         if (instance != null)
@@ -86,6 +88,8 @@ public class TwitchChatController : MonoBehaviour
         client.OnMessageReceived += OnMessageReceived;
         client.OnUserJoined += OnUserJoined;
         client.OnUserLeft += OnUserLeft;
+        StartCoroutine(chatPlayersCoinUpdate());
+        StartCoroutine(GetChatters());
     }
     void Connect()
     {
@@ -94,6 +98,7 @@ public class TwitchChatController : MonoBehaviour
         client = new Client();
         client.Initialize(credentials, channelName);
         client.Connect();
+
     }
     private void OnUserLeft(object sender, OnUserLeftArgs e)
     {
@@ -101,22 +106,13 @@ public class TwitchChatController : MonoBehaviour
 
     private void OnUserJoined(object sender, OnUserJoinedArgs e)
     {
-        StartCoroutine(UserJoined(e.Username));
-        Debug.Log("User: " + e.Username + " has Joined");
-        //querry streamer player collection
-        //if exists , add player to databasePlayers
-        //else
-        //add player to the streamer/players collection
-        //then querry user collection
-        //if exist add channel to fighters array
-        //else
-        //get user info and add them to user collection
+        // StartCoroutine(UserJoined(e.Username));
+        // Debug.Log("User: " + e.Username + " has Joined");
+
     }
 
     IEnumerator UserJoined(string userName)
     {
-        newUsers = new List<User>();
-        newPlayers = new List<Player>();
         var func = functions.GetHttpsCallable("UserJoinedQuery");
         var data = new Dictionary<string, object>();
         data["channel"] = channelName;
@@ -134,30 +130,24 @@ public class TwitchChatController : MonoBehaviour
                    // The function succeeded.
                    var result = (IDictionary)callTask.Result.Data;
 
-                   Debug.Log("Player doc, "+userName+" is empty ,result: " + result["results"]);
-                   if (result["results"].ToString() == "data")
+                   string dbresult = result["results"].ToString();
+                   Debug.Log(dbresult.ToString());
+                   if (dbresult == "data")
                    {
                        Debug.Log("adding user joined , " + userName + " ,to database players");
                        string json = JsonConvert.SerializeObject(result["playerData"]);
                        Debug.Log(json);
-                      dataBasePlayers.Add(JsonConvert.DeserializeObject<Player>(json));
-                    //    dataBasePlayers.Add(new Player(){
-                    //        player.
-                    //    });
+                       Player player = JsonConvert.DeserializeObject<Player>(json);
+                       dataBasePlayers.Add(player);
+
                    }
-                   if (result["results"].ToString() == "1" || result["results"].ToString() == "2")
+                   if (dbresult == "1" || dbresult == "2")
                    {
                        GetUserJoinedData(userName);
-                       newPlayers.Add(new Player()
-                       {
-                           Id = newUsers[0].Id,
-                           DisplayName = newUsers[0].DisplayName,
-                           UserName = newUsers[0].UserName,
-                           Platform = platform,
-                           Channel = channelName
-                       });
+
                        StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
                        StartCoroutine(WriteNewPlayersToDB(JsonConvert.SerializeObject(newPlayers)));
+
                        dataBasePlayers.Add(new Player()
                        {
                            Id = newUsers[0].Id,
@@ -167,11 +157,8 @@ public class TwitchChatController : MonoBehaviour
                            Channel = channelName
                        });
                    }
-
                });
         yield return new WaitUntil(() => task.IsCompleted);
-
-
     }
     public void GetUserJoinedData(string userName)
     {
@@ -194,6 +181,17 @@ public class TwitchChatController : MonoBehaviour
                 UserName = data.Data[0].Login,
                 ProfileUrl = data.Data[0].Profile_image_url
             };
+            newUser.Fighters.Add(channelName);
+            newUsers.Add(newUser);
+
+            newPlayers.Add(new Player()
+            {
+                Id = data.Data[0].Id,
+                DisplayName = data.Data[0].Display_name,
+                UserName = data.Data[0].Login,
+                Platform = platform,
+                Channel = channelName
+            });
         }
     }
     private void OnMessageReceived(object sender, OnMessageReceivedArgs e)
@@ -203,15 +201,74 @@ public class TwitchChatController : MonoBehaviour
         chatBox.text = chatBox.text + "\n" + String.Format("{0}: {1}", speaker, message);
         ReceiveMessage(speaker, e);
     }
+    void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
+    {
+        //Twitch Command
+        if (e.ChatMessage.Message.StartsWith("!hi"))
+        {
+            SendTwitchMessage(String.Format("Hello, {0}", speaker), e);
+        }
+
+        if (e.ChatMessage.Message.StartsWith("!join"))
+        {
+            arenaSetup.playersJoining.Add(speaker);
+            SendTwitchMessage(String.Format("Adding, {0} to the game!", speaker), e);
+        }
+        if (e.ChatMessage.Message.StartsWith("!drop"))
+        {
+            arenaSetup.playersJoining.Remove(speaker);
+            SendTwitchMessage(String.Format("Removing, {0} from the game!", speaker), e);
+        }
+    }
     public void SendTwitchMessage(string message, OnMessageReceivedArgs e)
     {
         client.SendMessage(client.JoinedChannels[0], message);
     }
-
-    void Update()
+    IEnumerator GetTexture(string playerTexture)
     {
+        UnityWebRequest www = UnityWebRequestTexture.GetTexture(playerTexture);
+        yield return www.SendWebRequest();
+        if (www.isNetworkError || www.isHttpError)
+        {
+            Debug.Log(www.error);
+        }
+        else
+        {
+            Texture myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+        }
     }
 
+    IEnumerator chatPlayersCoinUpdate()
+    {
+        yield return new WaitForSeconds(60f);
+        while (true)
+        {
+            Debug.Log("StartingCoinsUpdate");
+            string CPtoJson = JsonConvert.SerializeObject(chatPlayers);
+            Debug.Log(CPtoJson);
+            var func = functions.GetHttpsCallable("chatPlayersCoinUpdate");
+            var data = new Dictionary<string, object>();
+            data["CPData"] = CPtoJson;
+            data["channel"] = channelName;
+            data["platform"] = platform;
+            data["CPU"] = coinsPerUpdate;
+            var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) =>
+            {
+                if (callTask.IsFaulted)
+                {
+                    // The function unexpectedly failed.
+                    Debug.Log("FAILED!");
+                    Debug.Log(String.Format("  Error: {0}", callTask.Exception));
+                    return;
+                }
+                var result = (IDictionary)callTask.Result.Data;
+                Debug.Log(result["fuctionran"]);
+            });
+            yield return new WaitUntil(() => task.IsCompleted);
+            Debug.Log("update Complete");
+            yield return new WaitForSeconds(60f);
+        }
+    }
     private void GetChatterListCallback(List<ChatterFormatted> listOfChatters)
     {
         foreach (var chatterObject in listOfChatters)
@@ -219,16 +276,21 @@ public class TwitchChatController : MonoBehaviour
             chatUsers.Add(new User() { UserName = chatterObject.Username });
         }
     }
-
-    public void TryGettingChatters()
+    public IEnumerator GetChatters()
     {
-        chatUsers = new List<User>();
-        newUsers = new List<User>();
-        userInfo = new List<UserInfo>();
-        api.Invoke(api.Undocumented.GetChattersAsync(client.JoinedChannels[0].Channel), GetChatterListCallback);
-        StartCoroutine(CompareNewToCurrentUsers());
+        yield return new WaitForSeconds(15f);
+        while (true)
+        {
+            chatUsers = new List<User>();
+            newUsers = new List<User>();
+            userInfo = new List<UserInfo>();
+            newPlayers = new List<Player>();
+            chatPlayers = new List<Player>();
+            api.Invoke(api.Undocumented.GetChattersAsync(client.JoinedChannels[0].Channel), GetChatterListCallback);
+            StartCoroutine(CompareNewToCurrentUsers());
+            yield return new WaitForSeconds(60f);
+        }
     }
-
     IEnumerator DoesChannelExist()
     {
         yield return GetChannelData();
@@ -288,7 +350,9 @@ public class TwitchChatController : MonoBehaviour
         {
             yield return StartCoroutine(QueryChannelsDBPlayers());
             newPlayers = JsonConvert.DeserializeObject<List<Player>>(playersFromDB);
-            yield return newUsers = chatUsers.Where(x => !dataBasePlayers.Any(y => y.UserName == x.UserName)).ToList();
+            chatPlayers = dataBasePlayers.Where(x => chatUsers.Any(y => y.UserName == x.UserName)).ToList();
+            newUsers = chatUsers.Where(x => !dataBasePlayers.Any(y => y.UserName == x.UserName)).ToList();
+
             List<User> dummy = new List<User>(newUsers);
             newUsers = new List<User>();
             newPlayers = new List<Player>();
@@ -307,7 +371,7 @@ public class TwitchChatController : MonoBehaviour
             }
             yield return StartCoroutine(WriteNewUsersToDB(JsonConvert.SerializeObject(newUsers)));
             yield return StartCoroutine(WriteNewPlayersToDB(JsonConvert.SerializeObject(newPlayers)));
-            dataBasePlayers = new List<Player>(newPlayers);
+            chatPlayers = new List<Player>(newPlayers);
         }
         Debug.Log("DONE!");
     }
@@ -349,50 +413,11 @@ public class TwitchChatController : MonoBehaviour
         });
         yield return new WaitUntil(() => task.IsCompleted);
     }
-    void ReceiveMessage(String speaker, OnMessageReceivedArgs e)
-    {
-        //Twitch Command
-        if (e.ChatMessage.Message.StartsWith("!hi"))
-        {
-            SendTwitchMessage(String.Format("Hello, {0}", speaker), e);
-        }
-
-        if (e.ChatMessage.Message.StartsWith("!join"))
-        {
-            arenaSetup.playersJoining.Add(speaker);
-            SendTwitchMessage(String.Format("Adding, {0} to the game!", speaker), e);
-        }
-        if (e.ChatMessage.Message.StartsWith("!drop"))
-        {
-            arenaSetup.playersJoining.Remove(speaker);
-            SendTwitchMessage(String.Format("Removing, {0} from the game!", speaker), e);
-        }
-
-
-    }
-
-    string GetChannelID()
-    {
-        string userDataRequest = string.Format(string.Format("https://api.twitch.tv/helix/users?login={0}", channelName));
-        WebRequest requestObject = WebRequest.Create(userDataRequest);
-        requestObject.Headers.Add("Client-ID", Secrets.Client_ID);
-        requestObject.Headers.Add("Authorization: Bearer " + Secrets.Access_token);
-        HttpWebResponse responseObject = (HttpWebResponse)requestObject.GetResponse();
-        using (Stream stream = responseObject.GetResponseStream())
-        {
-            StreamReader sr = new StreamReader(stream);
-            string CNdata = sr.ReadToEnd();
-            UserInfo id = JsonConvert.DeserializeObject<UserInfo>(CNdata);
-            channelID = id.Data[0].Id;
-            sr.Close();
-        }
-        return channelID;
-    }
 
     string GetChannelJson()
     {
         string data;
-        string channelDataRequest = string.Format("https://api.twitch.tv/kraken/channels/{0}", channelID);
+        string channelDataRequest = string.Format("https://api.twitch.tv/helix/streams?user_login={0}", channelName);
         WebRequest requestObject2 = WebRequest.Create(channelDataRequest);
         requestObject2.PreAuthenticate = true;
         requestObject2.Headers.Add("Client-ID", Secrets.Client_ID);
@@ -406,14 +431,10 @@ public class TwitchChatController : MonoBehaviour
         }
         return data;
     }
-
     IEnumerator GetChannelData()
     {
-        yield return channelID = GetChannelID();
         yield return channelData = GetChannelJson();
     }
-
-
     public void GetUserData(string userName)
     {
         string userDataRequest = string.Format("https://api.twitch.tv/helix/users?login={0}", userName);
@@ -447,7 +468,7 @@ public class TwitchChatController : MonoBehaviour
                 Channel = channelName
             });
 
-            dataBasePlayers.Add(new Player()
+            chatPlayers.Add(new Player()
             {
                 Id = data.Data[0].Id,
                 DisplayName = data.Data[0].Display_name,
@@ -455,20 +476,6 @@ public class TwitchChatController : MonoBehaviour
                 Platform = platform,
                 Channel = channelName
             });
-        }
-    }
-
-    IEnumerator GetTexture(string playerTexture)
-    {
-        UnityWebRequest www = UnityWebRequestTexture.GetTexture(playerTexture);
-        yield return www.SendWebRequest();
-        if (www.isNetworkError || www.isHttpError)
-        {
-            Debug.Log(www.error);
-        }
-        else
-        {
-            Texture myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
         }
     }
     void checkFirebaseDepen()

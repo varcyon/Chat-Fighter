@@ -38,6 +38,7 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
             }
         } else {
             console.log("doc exists")
+            await db.collection(`${platform}Streamers`).doc(`${channel}`).set(channelData)
             return {
                 streamerExists: "streamer"
             }
@@ -57,17 +58,17 @@ exports.UserJoinedQuery = functions.https.onCall(async (data) => {
     const UserName = data.user
     try {
         const playerDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${UserName}`).get()
-        if (!playerDoc.exists) {
+        if (playerDoc.exists) {
             //player exists
-                const playerData = playerDoc.data
+                const playerData = playerDoc.data()
                 console.log(playerData)
                 return{
                     results: "data",
                     playerData: playerData
                 }
         } else {
-            const userDoc = await db.collection("Users").where('UserName', '==', `${UserName}`).get()
-            if (!userDoc.empty) {
+            const userDoc = await db.collection("Users").doc(`${UserName}`).get()
+            if (userDoc.exists) {
                 return {
                     results: "1"//"add Player and update users fighters"
                 }
@@ -118,11 +119,13 @@ exports.AddNewUsers = functions.https.onCall(async (data) => {
         jsonObj.forEach(async user => {
             const userExist = await db.collection("Users").doc(`${user.UserName}`).get()
             if (!userExist.exists) {
-                await db.collection("Users").doc(`${user.UserName}`).set(user)
+                let setDoc = await db.collection("Users").doc(`${user.UserName}`).set(user)
+                setDoc=setDoc
             } else {
-                await db.collection("Users").doc(`${user.UserName}`).update({
+                let updoc = await db.collection("Users").doc(`${user.UserName}`).update({
                     Fighters: admin.firestore.FieldValue.arrayUnion(`${channel}`)
                 })
+                updoc=updoc
             }
         })
     } catch (error) {
@@ -134,7 +137,26 @@ exports.AddNewUsers = functions.https.onCall(async (data) => {
 })
 
 
-
+exports.chatPlayersCoinUpdate = functions.https.onCall(async (data) => {
+    const db = admin.firestore()
+    const channel = data.channel
+    const platform = data.platform
+    const CPU = data.CPU
+    const jsonObj = JSON.parse(data.CPData)
+    try {
+        jsonObj.forEach(async player => {
+            let updateDoc =  await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).update({
+               Coin: admin.firestore.FieldValue.increment(CPU)
+            })
+            console.log(updateDoc)
+        })
+    } catch (error) {
+        console.log(error)
+    }
+    return {
+        fuctionran: CPU +" Coins have been given"
+    }
+})
 
 
 exports.AddNewPlayers = functions.https.onCall(async (data) => {
