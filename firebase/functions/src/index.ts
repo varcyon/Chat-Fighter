@@ -38,7 +38,7 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
             }
         } else {
             console.log("doc exists")
-            await db.collection(`${platform}Streamers`).doc(`${channel}`).set(channelData)
+            // await db.collection(`${platform}Streamers`).doc(`${channel}`).set(channelData)
             return {
                 streamerExists: "streamer"
             }
