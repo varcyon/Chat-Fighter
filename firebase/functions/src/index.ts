@@ -158,7 +158,23 @@ exports.chatPlayersCoinUpdate = functions.https.onCall(async (data) => {
     }
 })
 
-
+exports.UpdatePlayers = functions.https.onCall(async (data) => {
+    const db = admin.firestore()
+    const channel = data.channel
+    const platform = data.platform
+    const jsonObj = JSON.parse(data.dataFromUnity)
+    try {
+        jsonObj.forEach(async player => {
+                let setDoc = await db.collection(`${platform}Streamers`).doc(`${channel}`).collection("Players").doc(`${player.UserName}`).set(player)
+                setDoc = setDoc
+        })
+    } catch (error) {
+        console.log(error)
+    }
+    return {
+        fuctionran: "Update players has run."
+    }
+})
 exports.AddNewPlayers = functions.https.onCall(async (data) => {
     const db = admin.firestore()
     const channel = data.channel

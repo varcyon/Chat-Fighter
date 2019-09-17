@@ -112,8 +112,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 256.75, y: 0}
+  m_AnchoredPosition: {x: -10, y: 0}
+  m_SizeDelta: {x: 250, y: -20}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &7128693558849394849
 CanvasRenderer:
@@ -194,7 +194,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2827902469351139686}
-  - component: {fileID: 2827902469351139687}
   - component: {fileID: 2827902469351139705}
   - component: {fileID: 6195157499826629407}
   m_Layer: 0
@@ -219,18 +218,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2827902469351139687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2827902469351139704}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5fb82b70ea06524bb76290692b0aefe, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2827902469351139705
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -243,13 +230,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 678a3b050d5c3164bbcb4bbcf6165d57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  channelName: varcy0n
+  channelName: lana_lux
   playersJoined: []
   arenaSetupUI: {fileID: 0}
   chatBox: {fileID: 6828886115069462046}
   chatUsers: []
-  currentUsers: []
   newUsers: []
+  chatPlayers: []
+  dataBasePlayers: []
+  newPlayers: []
+  channelData: 
+  channelID: 
+  coinsPerUpdate: 5
 --- !u!114 &6195157499826629407
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,7 +254,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7e46dbf6da889a478f3f8a7f3e6b79e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wwwResponse: 
 --- !u!1 &3288102526989291033
 GameObject:
   m_ObjectHideFlags: 0
@@ -295,7 +286,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -126.87501, y: 311.5}
+  m_AnchoredPosition: {x: -123.49997, y: 127.5}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &3901923081570517198
@@ -687,7 +678,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -1.3, y: 4.299988}
+  m_AnchoredPosition: {x: -1.300003, y: 4.299988}
   m_SizeDelta: {x: -12.9, y: 0}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &4639771516137197258
