@@ -28,7 +28,7 @@ exports.doesChannelExist = functions.https.onCall(async (data) => {
     const channel = data.channel
     const platform = data.platform
     const channelData = JSON.parse(data.channelData)
-    console.log(channelData)
+    // console.log(channelData)
     try {
         const DBdata = await admin.firestore().collection(`${platform}Streamers`).doc(`${channel}`).get()
         if (!DBdata.exists) {
@@ -66,7 +66,7 @@ exports.UserJoinedQuery = functions.https.onCall(async (data) => {
                     results: "data",
                     playerData: playerData
                 }
-        } else {
+        } else if(!playerDoc.exists){
             const userDoc = await db.collection("Users").doc(`${UserName}`).get()
             if (userDoc.exists) {
                 return {
@@ -116,7 +116,7 @@ exports.AddNewUsers = functions.https.onCall(async (data) => {
     const jsonObj = JSON.parse(data.dataFromUnity)
     const channel = data.channel
     try {
-        jsonObj.forEach(async user => {
+        jsonObj.forEach(async user  => {
             const userExist = await db.collection("Users").doc(`${user.UserName}`).get()
             if (!userExist.exists) {
                 let setDoc = await db.collection("Users").doc(`${user.UserName}`).set(user)
