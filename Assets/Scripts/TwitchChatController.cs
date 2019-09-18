@@ -53,7 +53,7 @@ public class TwitchChatController : MonoBehaviour
     List<UserInfo> userInfo = new List<UserInfo>();
     public List<Player> dataBasePlayers = new List<Player>();
     public List<Player> newPlayers = new List<Player>();
-    public Dictionary<string, Player> playerDBDictionary ;
+    public Dictionary<string, Player> playerDBDictionary;
     bool StreamerExist;
     public string channelData;
     public string channelID;
@@ -100,29 +100,33 @@ public class TwitchChatController : MonoBehaviour
     }
     private void OnchatCommandReceived(object sender, OnChatCommandReceivedArgs e)
     {
-        switch (e.Command.CommandText)
+        if (e.Command.ChatMessage.Username == "varcy0n")
         {
-            case "dict":
-            break;
-            case "hi":
-                client.SendMessage(e.Command.ChatMessage.Channel, $"Hello {e.Command.ChatMessage.DisplayName}!");
+            switch (e.Command.CommandText)
+            {
+                case "Points":
+                    client.SendMessage(e.Command.ChatMessage.Channel, $"{e.Command.ChatMessage.DisplayName} ,you have {ChatCommands.instance.points(e.Command.ChatMessage.Username)} coins.");
                 break;
-            case "Join":
-                arenaSetup.playersJoining.Add(e.Command.ChatMessage.Username);
-                client.SendMessage(e.Command.ChatMessage.Channel, $"Adding, {e.Command.ChatMessage.DisplayName} to the game!");
-                break;
+                case "hi":
+                    client.SendMessage(e.Command.ChatMessage.Channel, $"Hello {e.Command.ChatMessage.DisplayName}!");
+                    break;
+                case "Join":
+                    arenaSetup.playersJoining.Add(e.Command.ChatMessage.Username);
+                    client.SendMessage(e.Command.ChatMessage.Channel, $"Adding, {e.Command.ChatMessage.DisplayName} to the game!");
+                    break;
                 case "Drop":
-                arenaSetup.playersJoining.Remove(e.Command.ChatMessage.Username);
-                client.SendMessage(e.Command.ChatMessage.Channel, $"Removing, {e.Command.ChatMessage.DisplayName} from the game!");
-                break;
-            default:
-                client.SendMessage(e.Command.ChatMessage.Channel, $"Unknown chat command: {e.Command.CommandIdentifier}{e.Command.CommandText}");
-                Debug.Log(e.Command.CommandIdentifier);
-                Debug.Log(e.Command.CommandText);
-                Debug.Log(e.Command.ChatMessage.Message);
-                Debug.Log(e.Command.ChatMessage.Username);
-                Debug.Log(e.Command.ArgumentsAsList.Count);
-                break;
+                    arenaSetup.playersJoining.Remove(e.Command.ChatMessage.Username);
+                    client.SendMessage(e.Command.ChatMessage.Channel, $"Removing, {e.Command.ChatMessage.DisplayName} from the game!");
+                    break;
+                default:
+                    client.SendMessage(e.Command.ChatMessage.Channel, $"Unknown chat command: {e.Command.CommandIdentifier}{e.Command.CommandText}");
+                    Debug.Log(e.Command.CommandIdentifier);
+                    Debug.Log(e.Command.CommandText);
+                    Debug.Log(e.Command.ChatMessage.Message);
+                    Debug.Log(e.Command.ChatMessage.Username);
+                    Debug.Log(e.Command.ArgumentsAsList.Count);
+                    break;
+            }
         }
     }
     void Connect()
@@ -172,7 +176,6 @@ public class TwitchChatController : MonoBehaviour
                 player.Coin += coinsPerUpdate;
             }
             Debug.Log("updated chatPlayers");
-            Debug.Log("unioning chatPlayers to databasePlayers");
             dataBasePlayers.Union(chatPlayers).ToList();
             yield return new WaitForSeconds(60f);
         }
@@ -221,9 +224,9 @@ public class TwitchChatController : MonoBehaviour
             var result = (IDictionary)callTask.Result.Data;
             playersFromDB = JsonConvert.SerializeObject(result["playersFromDB"]);
             dataBasePlayers = JsonConvert.DeserializeObject<List<Player>>(playersFromDB);
-            playerDBDictionary = dataBasePlayers.ToDictionary(p => p.UserName, p => p);
-            playerDBDictionary["varcy0n"].Coin +=20;
-            dataBasePlayers = playerDBDictionary.Values.ToList();
+            // playerDBDictionary = dataBasePlayers.ToDictionary(p => p.UserName, p => p);
+            // playerDBDictionary["varcy0n"].Coin +=20;
+            // dataBasePlayers = playerDBDictionary.Values.ToList();
 
         });
         yield return new WaitUntil(() => task.IsCompleted);
