@@ -223,7 +223,8 @@ public class TwitchChatController : MonoBehaviour
             dataBasePlayers = JsonConvert.DeserializeObject<List<Player>>(playersFromDB);
             playerDBDictionary = dataBasePlayers.ToDictionary(p => p.UserName, p => p);
             playerDBDictionary["varcy0n"].Coin +=20;
-            Debug.Log(JsonConvert.SerializeObject(playerDBDictionary));
+            dataBasePlayers = playerDBDictionary.Values.ToList();
+
         });
         yield return new WaitUntil(() => task.IsCompleted);
     }
