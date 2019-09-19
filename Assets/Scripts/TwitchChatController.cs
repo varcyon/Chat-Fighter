@@ -37,7 +37,7 @@ public class TwitchChatController : MonoBehaviour
     public static TwitchChatController instance;
     //Variables for Twitch IRC
 
-    public Client client;
+    public static Client client;
 
 
     //Variables for Twitch chat UI and Players
@@ -104,9 +104,12 @@ public class TwitchChatController : MonoBehaviour
         {
             switch (e.Command.CommandText)
             {
-                case "Points":
-                    client.SendMessage(e.Command.ChatMessage.Channel, $"{e.Command.ChatMessage.DisplayName} ,you have {ChatCommands.instance.points(e.Command.ChatMessage.Username)} coins.");
-                break;
+                case "gamble":
+                    ChatCommands.command.gamble(e.Command.ChatMessage.Username, int.Parse(e.Command.ArgumentsAsList[0]), e.Command.ChatMessage.Channel);
+                    break;
+                case "coins":
+                    client.SendMessage(e.Command.ChatMessage.Channel, $"{e.Command.ChatMessage.DisplayName} ,you have {ChatCommands.command.points(e.Command.ChatMessage.Username)} coins.");
+                    break;
                 case "hi":
                     client.SendMessage(e.Command.ChatMessage.Channel, $"Hello {e.Command.ChatMessage.DisplayName}!");
                     break;
@@ -141,12 +144,12 @@ public class TwitchChatController : MonoBehaviour
     private void OnUserLeft(object sender, OnUserLeftArgs e)
     {
         //remove player from chatPlayer.
-        Debug.Log("User: " + e.Username + " has left");
+        // Debug.Log("User: " + e.Username + " has left");
     }
     private void OnUserJoined(object sender, OnUserJoinedArgs e)
     {
         // StartCoroutine(UserJoined(e.Username));
-        Debug.Log("User: " + e.Username + " has Joined");
+        // Debug.Log("User: " + e.Username + " has Joined");
     }
     public void SendTwitchMessage(string message, OnMessageReceivedArgs e)
     {
