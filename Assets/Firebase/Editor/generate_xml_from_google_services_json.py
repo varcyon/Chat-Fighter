@@ -79,9 +79,8 @@ def construct_plist_dictionary(xml_root):
     A dictionary, containing key-value pairs for all (supported) entries in the
     node.
   """
-  xml_dict = xml_root.find('dict')
 
-  if xml_dict is None:
+  if (xml_dict := xml_root.find('dict')) is None:
     return None
 
   plist_dict = {}
@@ -165,8 +164,7 @@ def convert_plist_to_json(plist_string, input_filename):
                      'It does not appear to be valid XML.\n' % (input_filename))
     return None
 
-  plist_dict = construct_plist_dictionary(root)
-  if plist_dict is None:
+  if (plist_dict := construct_plist_dictionary(root)) is None:
     sys.stderr.write('In file %s, could not locate a top-level \'dict\' '
                      'element.\n'
                      'File format should be plist XML, with a top-level '
@@ -324,8 +322,7 @@ def main():
   root = ElementTree.Element('resources')
   root.set('xmlns:tools', 'http://schemas.android.com/tools')
 
-  project_info = jsobj.get('project_info')
-  if project_info:
+  if project_info := jsobj.get('project_info'):
     gen_string(root, 'firebase_database_url', project_info.get('firebase_url'))
     gen_string(root, 'gcm_defaultSenderId', project_info.get('project_number'))
     gen_string(root, 'google_storage_bucket',
@@ -341,8 +338,7 @@ def main():
     return 0
 
   packages = set()
-  client_list = jsobj.get('client')
-  if client_list:
+  if client_list := jsobj.get('client'):
     # Search for the user specified package in the file.
     selected_package_name = ''
     selected_client = client_list[0]
@@ -371,19 +367,16 @@ def main():
                                  '\n'.join(packages)))
       return 1
 
-    client_api_key = selected_client.get('api_key')
-    if client_api_key:
+    if client_api_key := selected_client.get('api_key'):
       client_api_key0 = client_api_key[0]
       gen_string(root, 'google_api_key', client_api_key0.get('current_key'))
       gen_string(root, 'google_crash_reporting_api_key',
                  client_api_key0.get('current_key'))
 
-    client_info = selected_client.get('client_info')
-    if client_info:
+    if client_info := selected_client.get('client_info'):
       gen_string(root, 'google_app_id', client_info.get('mobilesdk_app_id'))
 
-    oauth_client_list = selected_client.get('oauth_client')
-    if oauth_client_list:
+    if oauth_client_list := selected_client.get('oauth_client'):
       for oauth_client in oauth_client_list:
         client_type = oauth_client.get('client_type')
         client_id = oauth_client.get('client_id')
@@ -392,28 +385,21 @@ def main():
           # Only include the first matching OAuth web client ID.
           break
 
-    services = selected_client.get('services')
-    if services:
-      ads_service = services.get('ads_service')
-      if ads_service:
+    if services := selected_client.get('services'):
+      if ads_service := services.get('ads_service'):
         gen_string(root, 'test_banner_ad_unit_id',
                    ads_service.get('test_banner_ad_unit_id'))
         gen_string(root, 'test_interstitial_ad_unit_id',
                    ads_service.get('test_interstitial_ad_unit_id'))
-      analytics_service = services.get('analytics_service')
-      if analytics_service:
-        analytics_property = analytics_service.get('analytics_property')
-        if analytics_property:
+      if analytics_service := services.get('analytics_service'):
+        if analytics_property := analytics_service.get('analytics_property'):
           gen_string(root, 'ga_trackingId',
                      analytics_property.get('tracking_id'))
       # enable this once we have an example if this service being present
       # in the json data:
-      maps_service_enabled = False
-      if maps_service_enabled:
-        maps_service = services.get('maps_service')
-        if maps_service:
-          maps_api_key = maps_service.get('api_key')
-          if maps_api_key:
+      if maps_service_enabled := False:
+        if maps_service := services.get('maps_service'):
+          if maps_api_key := maps_service.get('api_key'):
             for k in range(0, len(maps_api_key)):
               # generates potentially multiple of these keys, which is
               # the same behavior as the java plugin.

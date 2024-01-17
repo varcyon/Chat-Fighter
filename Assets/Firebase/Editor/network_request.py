@@ -93,8 +93,7 @@ def unwrap_kwarg_namespace(func):
 
     args = argspec.args or []
     for arg_name in args:
-      passed_value = getattr(argparse_namespace, arg_name, None)
-      if passed_value is not None:
+      if (passed_value := getattr(argparse_namespace, arg_name, None)) is not None:
         new_kwargs[arg_name] = passed_value
 
     for namespace_key in vars(argparse_namespace).keys():
@@ -157,9 +156,8 @@ class NetworkRequest(object):
     Raises:
       ValueError when the scheme does not match http or https
     """
-    scheme = self.parsed_url.scheme
 
-    if scheme == 'http':
+    if (scheme := self.parsed_url.scheme) == 'http':
       return False
     elif scheme == 'https':
       return True
