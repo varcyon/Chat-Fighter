@@ -19,6 +19,7 @@
 Converts the services json file to xml:
 https://googleplex-android.googlesource.com/platform/tools/base/+/studio-master-dev/build-system/google-services/src/main/groovy/com/google/gms/googleservices
 """
+import defusedxml.ElementTree
 
 __author__ = 'Wouter van Oortmerssen'
 
@@ -159,7 +160,7 @@ def convert_plist_to_json(plist_string, input_filename):
   """
 
   try:
-    root = ElementTree.fromstring(plist_string)
+    root = defusedxml.ElementTree.fromstring(plist_string)
   except ElementTree.ParseError:
     sys.stderr.write('Error parsing file %s.\n'
                      'It does not appear to be valid XML.\n' % (input_filename))
